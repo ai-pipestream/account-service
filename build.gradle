@@ -42,6 +42,7 @@ dependencies {
     // Test dependencies
     testImplementation 'io.quarkus:quarkus-junit5'
     testImplementation 'io.pipeline:grpc-wiremock:1.0.0-SNAPSHOT'
+    testImplementation libs.smallrye.reactive.messaging.in.memory
     integrationTestImplementation 'io.grpc:grpc-netty-shaded'
     integrationTestImplementation 'io.grpc:grpc-protobuf'
     integrationTestImplementation 'io.grpc:grpc-stub'
