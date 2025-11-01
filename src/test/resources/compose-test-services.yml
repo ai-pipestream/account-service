@@ -113,6 +113,10 @@ services:
     labels:
       # Wait for Apicurio to be ready before considering service started
       io.quarkus.devservices.compose.wait_for.logs: ".*Listening on.*"
+      # Map the exposed port to apicurio registry URL property
+      # Port 8080 inside container is exposed as 8082 on host (see ports: "8082:8080")
+      # Quarkus will automatically use the host-side port (8082) for this mapping
+      io.quarkus.devservices.compose.config_map.8080: mp.messaging.connector.smallrye-kafka.apicurio.registry.url
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
