@@ -92,34 +92,36 @@ compileTestJava {
 // Publishing configuration
 publishing {
     publications {
-        maven(MavenPublication) {
+        //noinspection GroovyAssignabilityCheck
+        maven(MavenPublication) { publication ->
             from components.java
-            artifact(tasks.named('quarkusBuild')) {
-                classifier = 'runner'
+            //noinspection GroovyAssignabilityCheck
+            artifact(tasks.named('quarkusBuild')) { artifact ->
+                artifact.classifier = 'runner'
             }
-            pom {
-                name = 'Account Service'
-                description = 'User account management and authentication service'
-                url = 'https://github.com/io-pipeline/account-service'
+            pom { pom ->
+                pom.name = 'Account Service'
+                pom.description = 'User account management and authentication service'
+                pom.url = 'https://github.com/io-pipeline/account-service'
 
-                licenses {
-                    license {
-                        name = 'MIT License'
-                        url = 'https://opensource.org/licenses/MIT'
+                pom.licenses { licenses ->
+                    licenses.license { license ->
+                        license.name = 'MIT License'
+                        license.url = 'https://opensource.org/licenses/MIT'
                     }
                 }
 
-                developers {
-                    developer {
-                        id = 'krickert'
-                        name = 'Pipeline Engine Team'
+                pom.developers { developers ->
+                    developers.developer { developer ->
+                        developer.id = 'krickert'
+                        developer.name = 'Pipeline Engine Team'
                     }
                 }
 
-                scm {
-                    connection = 'scm:git:git://github.com/io-pipeline/account-service.git'
-                    developerConnection = 'scm:git:ssh://github.com/io-pipeline/account-service.git'
-                    url = 'https://github.com/io-pipeline/account-service'
+                pom.scm { scm ->
+                    scm.connection = 'scm:git:git://github.com/io-pipeline/account-service.git'
+                    scm.developerConnection = 'scm:git:ssh://github.com/io-pipeline/account-service.git'
+                    scm.url = 'https://github.com/io-pipeline/account-service'
                 }
             }
         }
