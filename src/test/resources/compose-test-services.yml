@@ -36,7 +36,10 @@ services:
       - mysql_test_data:/var/lib/mysql
       - ./init-mysql.sql:/docker-entrypoint-initdb.d/01-init-mysql.sql
     labels:
+      # Quarkus devservices label to prevent automatic MySQL devservice creation
       quarkus-dev-service-mysql: test
+      # Wait for MySQL to be ready before considering service started
+      io.quarkus.devservices.compose.wait_for.logs: ".*ready for connections.*"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -70,7 +73,14 @@ services:
     volumes:
       - kafka_test_data:/var/lib/kafka/data
     labels:
+      # Quarkus devservices label to prevent automatic Kafka devservice creation
       quarkus-dev-service-kafka: test
+      # Wait for Kafka to be ready before considering service started
+      io.quarkus.devservices.compose.wait_for.logs: ".*Kafka Server started.*"
+      # Map the exposed port to kafka.bootstrap.servers property
+      # Port 9094 inside container is exposed as 9095 on host (see ports: "9095:9094")
+      # Quarkus will automatically use the host-side port (9095) for this mapping
+      io.quarkus.devservices.compose.config_map.9094: kafka.bootstrap.servers
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
       interval: 10s
@@ -100,6 +110,9 @@ services:
     depends_on:
       mysql-test:
         condition: service_healthy
+    labels:
+      # Wait for Apicurio to be ready before considering service started
+      io.quarkus.devservices.compose.wait_for.logs: ".*Listening on.*"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s

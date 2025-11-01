@@ -1,42 +1,53 @@
 package io.pipeline.account;
 
+import io.grpc.ManagedChannel;
 import io.pipeline.grpc.wiremock.WireMockGrpcTestResource;
 import io.pipeline.grpc.wiremock.AccountManagerMock;
 import io.pipeline.grpc.wiremock.InjectWireMock;
-import io.pipeline.grpc.wiremock.MockGrpcProfile;
 import io.pipeline.repository.account.AccountServiceGrpc;
 import io.pipeline.repository.account.CreateAccountRequest;
 import io.pipeline.repository.account.GetAccountRequest;
 import io.pipeline.repository.account.InactivateAccountRequest;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.TestProfile;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 @QuarkusTestResource(WireMockGrpcTestResource.class)
-@TestProfile(MockGrpcProfile.class)
 public class AccountManagerWireMockTest {
 
     @InjectWireMock
     WireMockServer wireMockServer;
 
     private AccountManagerMock accountManagerMock;
+    private ManagedChannel channel;
     private AccountServiceGrpc.AccountServiceBlockingStub accountService;
 
     @BeforeEach
     void setUp() {
         accountManagerMock = new AccountManagerMock(wireMockServer.port());
-        
+
         // Create gRPC client that connects to WireMock
-        var channel = io.grpc.ManagedChannelBuilder.forAddress("localhost", wireMockServer.port())
+        channel = io.grpc.ManagedChannelBuilder.forAddress("localhost", wireMockServer.port())
                 .usePlaintext()
                 .build();
         accountService = AccountServiceGrpc.newBlockingStub(channel);
+    }
+
+    @AfterEach
+    void tearDown() throws InterruptedException {
+        // Properly shutdown the gRPC channel
+        if (channel != null && !channel.isShutdown()) {
+            channel.shutdown();
+            channel.awaitTermination(5, TimeUnit.SECONDS);
+        }
     }
 
     @Test
