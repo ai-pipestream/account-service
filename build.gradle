@@ -62,10 +62,9 @@ dependencies {
     integrationTestImplementation 'io.grpc:grpc-netty-shaded'
     integrationTestImplementation 'io.grpc:grpc-protobuf'
     integrationTestImplementation 'io.grpc:grpc-stub'
-    // https://mvnrepository.com/artifact/io.quarkus/quarkus-test-kafka-companion
-    testImplementation 'io.quarkus:quarkus-test-kafka-companion:3.29.0'
     testImplementation 'io.rest-assured:rest-assured'
     testImplementation 'io.quarkus:quarkus-test-common'
+    testImplementation libs.awaitility
 }
 
 group = 'io.pipeline'
