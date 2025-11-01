@@ -4,13 +4,26 @@ plugins {
     alias(libs.plugins.maven.publish)
 }
 
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "https://git.rokkon.com/api/packages/io-pipeline/maven"
+        credentials {
+            username = project.findProperty("gitea.user") ?: System.getenv("GITEA_USER")
+            password = project.findProperty("gitea.token") ?: System.getenv("GITEA_TOKEN")
+        }
+    }
+}
+
 dependencies {
     implementation 'io.quarkus:quarkus-container-image-docker'
-    
+
     // Dev services infrastructure (shared Docker Compose stack)
     runtimeOnly 'io.pipeline:devservices-docker-compose:1.0.0-SNAPSHOT'
-    
-    // Use published BOM from Maven Local
+
+    // Use published BOM from Maven Local or Gitea
     implementation platform('io.pipeline:pipeline-bom:1.0.0-SNAPSHOT')
 
     // Core Quarkus dependencies
@@ -34,7 +47,7 @@ dependencies {
     implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-consul-client'
     implementation 'io.smallrye.stork:stork-service-registration-consul'
 
-    // Pipeline libraries (published to Maven Local)
+    // Pipeline libraries (published to Maven Local or Gitea)
     implementation 'io.pipeline:grpc-stubs:1.0.0-SNAPSHOT'
     implementation 'io.pipeline:dynamic-grpc-registration-clients:1.0.0-SNAPSHOT'
     implementation 'io.pipeline:dynamic-grpc:1.0.0-SNAPSHOT'
@@ -74,29 +87,32 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
+            artifact(tasks.named('quarkusBuild')) {
+                classifier = 'runner'
+            }
             pom {
-                name.set('Account Service')
-                description.set('User account management and authentication service')
-                url.set('https://github.com/io-pipeline/account-service')
+                name = 'Account Service'
+                description = 'User account management and authentication service'
+                url = 'https://github.com/io-pipeline/account-service'
 
                 licenses {
                     license {
-                        name.set('Apache License 2.0')
-                        url.set('https://www.apache.org/licenses/LICENSE-2.0')
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
                     }
                 }
 
                 developers {
                     developer {
-                        id.set('krickert')
-                        name.set('Pipeline Engine Team')
+                        id = 'krickert'
+                        name = 'Pipeline Engine Team'
                     }
                 }
 
                 scm {
-                    connection.set('scm:git:git://github.com/io-pipeline/account-service.git')
-                    developerConnection.set('scm:git:ssh://github.com/io-pipeline/account-service.git')
-                    url.set('https://github.com/io-pipeline/account-service')
+                    connection = 'scm:git:git://github.com/io-pipeline/account-service.git'
+                    developerConnection = 'scm:git:ssh://github.com/io-pipeline/account-service.git'
+                    url = 'https://github.com/io-pipeline/account-service'
                 }
             }
         }
@@ -106,9 +122,9 @@ publishing {
         // Publish to Gitea Maven registry (primary)
         maven {
             name = "Gitea"
-            url = uri("https://git.rokkon.com/api/packages/io-pipeline/maven")
+            url = "https://git.rokkon.com/api/packages/io-pipeline/maven"
             credentials {
-                username = project.findProperty("gitea.user") ?: System.getenv("GITEA_USER") ?: "krickert"
+                username = project.findProperty("gitea.user") ?: System.getenv("GITEA_USER")
                 password = project.findProperty("gitea.token") ?: System.getenv("GITEA_TOKEN")
             }
         }
@@ -116,7 +132,7 @@ publishing {
         // Publish to GitHub Packages (mirror)
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/io-pipeline/account-service")
+            url = "https://maven.pkg.github.com/io-pipeline/account-service"
             credentials {
                 username = System.getenv("GITHUB_ACTOR") ?: System.getenv("GH_USER")
                 password = System.getenv("GITHUB_TOKEN") ?: System.getenv("GH_PAT")

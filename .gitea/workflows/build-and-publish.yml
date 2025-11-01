@@ -13,56 +13,59 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      
+
       - name: Build and test with Gradle
+        env:
+          GITEA_USER: ${{ secrets.GIT_USER }}
+          GITEA_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: ./gradlew clean build test --no-daemon
-      
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: build/test-results/
-      
+
       - name: Publish to Gitea Maven
-        if: github.ref == 'refs/heads/main'
+        if: gitea.ref == 'refs/heads/main'
         env:
           GITEA_USER: ${{ secrets.GIT_USER }}
           GITEA_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: ./gradlew publishAllPublicationsToGiteaRepository --no-daemon
-      
+
       - name: Publish to GitHub Packages
-        if: github.ref == 'refs/heads/main'
+        if: gitea.ref == 'refs/heads/main'
         env:
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_USER: ${{ gitea.actor }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: ./gradlew publishAllPublicationsToGitHubPackagesRepository --no-daemon
 
   docker:
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main'
-    
+    if: gitea.ref == 'refs/heads/main'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Login to Gitea Container Registry
         uses: docker/login-action@v3
         with:
           registry: git.rokkon.com
           username: ${{ secrets.GIT_USER }}
           password: ${{ secrets.GIT_TOKEN }}
-      
+
       - name: Build and push Docker image with Quarkus
         env:
           QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ secrets.GIT_USER }}
@@ -71,6 +74,5 @@ jobs:
           ./gradlew build \
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.push=true \
-            -Dquarkus.container-image.additional-tags=${{ github.sha }} \
+            -Dquarkus.container-image.additional-tags=${{ gitea.sha }} \
             --no-daemon
-

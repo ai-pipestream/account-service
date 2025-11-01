@@ -1,5 +1,6 @@
 package io.pipeline.account;
 
+import io.pipeline.grpc.wiremock.MockServiceTestResource;
 import io.pipeline.repository.account.AccountServiceGrpc;
 import io.pipeline.repository.account.CreateAccountRequest;
 import io.pipeline.repository.account.GetAccountRequest;
@@ -7,6 +8,7 @@ import io.pipeline.repository.account.InactivateAccountRequest;
 import io.pipeline.repository.account.ListAccountsRequest;
 import io.pipeline.repository.account.UpdateAccountRequest;
 import io.quarkus.grpc.GrpcClient;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * returned in gRPC responses for both active and inactive accounts.
  */
 @QuarkusTest
+@QuarkusTestResource(MockServiceTestResource.class)
 public class AccountServiceGrpcTest {
 
     @GrpcClient("account-manager")

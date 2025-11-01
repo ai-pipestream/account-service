@@ -1,5 +1,7 @@
 package io.pipeline.account;
 
+import io.pipeline.grpc.wiremock.MockServiceTestResource;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.pipeline.repository.account.AccountServiceGrpc;
 import io.pipeline.repository.account.CreateAccountRequest;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
+@QuarkusTestResource(MockServiceTestResource.class)
 public class AccountServiceTest {
 
     @GrpcClient("account-manager")

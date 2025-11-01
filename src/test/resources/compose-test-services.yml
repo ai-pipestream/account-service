@@ -19,30 +19,6 @@ volumes:
     driver: local
 
 services:
-  # Consul for service discovery (test instance)
-  consul-test:
-    container_name: pipeline-consul-test
-    image: hashicorp/consul:latest
-    networks:
-      - pipeline-test-network
-    ports:
-      - "8510:8500"       # Test port (dev uses 8500)
-      - "8610:8600/tcp"   # Consul DNS TCP
-      - "8610:8600/udp"   # Consul DNS UDP
-    volumes:
-      - ./consul-config:/consul/config
-    command: "agent -dev -client=0.0.0.0 -enable-local-script-checks=true"
-    environment:
-      CONSUL_BIND_INTERFACE: eth0
-    labels:
-      quarkus-dev-service-consul: test
-    healthcheck:
-      test: ["CMD", "consul", "members"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
   # MySQL instance for tests
   mysql-test:
     container_name: pipeline-mysql-test
@@ -67,27 +43,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
-
-  # MinIO for S3-compatible object storage (test instance)
-  minio-test:
-    container_name: pipeline-minio-test
-    image: minio/minio:latest
-    networks:
-      - pipeline-test-network
-    ports:
-      - "9010:9000"     # Test API port (dev uses 9000)
-      - "9011:9001"     # Test Console port (dev uses 9001)
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_test_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # Kafka in KRaft mode (test instance) - matching dev setup
   kafka-test:
@@ -122,26 +77,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-
-  # Redis 8 for tests
-  redis-test:
-    container_name: pipeline-redis-test
-    image: redis:8-alpine
-    networks:
-      - pipeline-test-network
-    ports:
-      - "6380:6379"  # Test port (dev uses 6379)
-    volumes:
-      - redis_test_data:/data
-    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
-    labels:
-      quarkus-dev-service-redis: test
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   # Apicurio Registry for schema management (test instance)
   apicurio-registry-test:

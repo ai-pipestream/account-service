@@ -1,10 +1,12 @@
 package io.pipeline.account;
 
+import io.pipeline.grpc.wiremock.MockServiceTestResource;
 import io.pipeline.repository.account.AccountServiceGrpc;
 import io.pipeline.repository.account.CreateAccountRequest;
 import io.pipeline.repository.account.GetAccountRequest;
 import io.pipeline.repository.account.InactivateAccountRequest;
 import io.quarkus.grpc.GrpcClient;
+import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * for the active field in both active and inactive accounts.
  */
 @QuarkusTest
+@QuarkusTestResource(MockServiceTestResource.class)
 public class AccountServiceDebugTest {
 
     @GrpcClient("account-manager")
