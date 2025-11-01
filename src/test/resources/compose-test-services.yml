@@ -27,14 +27,21 @@ services:
       - pipeline-test-network
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: pipeline_test
+      MYSQL_DATABASE: pipeline_account_test
       MYSQL_USER: pipeline
       MYSQL_PASSWORD: password
     ports:
       - "3307:3306"  # Test port (dev uses 3306)
     volumes:
       - mysql_test_data:/var/lib/mysql
-      - ./init-mysql.sql:/docker-entrypoint-initdb.d/01-init-mysql.sql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+      --init-file=/docker-entrypoint-initdb.d/init.sql
+    configs:
+      - source: mysql_init
+        target: /docker-entrypoint-initdb.d/init.sql
     labels:
       # Quarkus devservices label to prevent automatic MySQL devservice creation
       quarkus-dev-service-mysql: test
@@ -123,3 +130,12 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+configs:
+  mysql_init:
+    content: |
+      -- Create additional database for Apicurio Registry
+      CREATE DATABASE IF NOT EXISTS apicurio_registry;
+      -- Grant privileges to the pipeline user
+      GRANT ALL PRIVILEGES ON apicurio_registry.* TO 'pipeline'@'%';
+      FLUSH PRIVILEGES;
