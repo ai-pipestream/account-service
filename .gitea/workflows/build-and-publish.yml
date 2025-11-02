@@ -47,12 +47,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle (no tests yet)
-        env:
-          GITEA_USER: ${{ secrets.GIT_USER }}
-          GITEA_TOKEN: ${{ secrets.GIT_TOKEN }}
-        run: ./gradlew clean build -x test --no-daemon --info --configuration-cache
-
       - name: Wait for test services to be healthy
         run: |
           cd src/test/resources
@@ -97,7 +91,7 @@ jobs:
           QUARKUS_DATASOURCE_JDBC_URL: jdbc:mysql://172.17.0.1:3307/pipeline_account_test
           # Override Kafka connection for DinD environment
           KAFKA_BOOTSTRAP_SERVERS: 172.17.0.1:9095
-        run: ./gradlew test --no-daemon --info --configuration-cache
+        run: ./gradlew clean build --no-daemon --warn --configuration-cache
 
       - name: Stop test services
         if: always()
