@@ -18,12 +18,13 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Start test services
+        env:
+          # Set full path to init-mysql.sql for DinD environment
+          INIT_SQL_PATH: /workspace/io-pipeline/account-service/src/test/resources/init-mysql.sql
         run: |
           pwd
-          ls -la
+          ls -la src/test/resources/init-mysql.sql
           cd src/test/resources
-          pwd
-          ls -la init-mysql.sql
           docker compose -f compose-test-services.yml up -d
           echo "Test services starting in background..."
 
