@@ -21,15 +21,26 @@ jobs:
         run: |
           pwd
           # Construct absolute path to init-mysql.sql for DinD compatibility
-          # Docker Compose in DinD requires absolute paths for bind mounts to work correctly
           WORKSPACE_ROOT=$(pwd)
           INIT_SQL_PATH="${WORKSPACE_ROOT}/src/test/resources/init-mysql.sql"
           echo "WORKSPACE_ROOT: ${WORKSPACE_ROOT}"
           echo "INIT_SQL_PATH: ${INIT_SQL_PATH}"
           ls -la src/test/resources/init-mysql.sql || ls -la ${INIT_SQL_PATH}
+          
+          # For DinD compatibility: Copy SQL file into named volume using stdin
+          # This avoids bind mount issues in Docker-in-Docker environments
+          # Method: Create a temporary container, copy file via stdin, then extract to volume
+          echo "Preparing MySQL init script volume..."
+          docker volume create pipeline-test-services_mysql_init_scripts || true
+          
+          # Create a temporary container with the SQL file copied via stdin
+          cat ${INIT_SQL_PATH} | docker run --rm -i \
+            -v pipeline-test-services_mysql_init_scripts:/target \
+            alpine:latest \
+            sh -c "cat > /target/01-init-mysql.sql && chmod 644 /target/01-init-mysql.sql && ls -la /target/"
+          
           cd src/test/resources
-          # Pass INIT_SQL_PATH explicitly to docker compose for DinD compatibility
-          INIT_SQL_PATH=${INIT_SQL_PATH} docker compose -f compose-test-services.yml up -d
+          docker compose -f compose-test-services.yml up -d
           echo "Test services starting in background..."
 
       - name: Grant execute permission for gradlew
@@ -60,11 +71,10 @@ jobs:
       - name: Stop test services
         if: always()
         run: |
-          # Construct absolute path to init-mysql.sql for DinD compatibility
-          WORKSPACE_ROOT=$(pwd)
-          INIT_SQL_PATH="${WORKSPACE_ROOT}/src/test/resources/init-mysql.sql"
           cd src/test/resources
-          INIT_SQL_PATH=${INIT_SQL_PATH} docker compose -f compose-test-services.yml down -v
+          docker compose -f compose-test-services.yml down -v
+          # Clean up the init scripts volume if it exists
+          docker volume rm pipeline-test-services_mysql_init_scripts 2>/dev/null || true
 
       - name: Upload test results
         if: always()
