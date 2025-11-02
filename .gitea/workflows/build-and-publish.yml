@@ -26,17 +26,18 @@ jobs:
           
           cd src/test/resources
           export MYSQL_INIT_SCRIPT_PATH=./init-mysql-ci.sql
-          docker compose -f compose-test-services.yml up -d
-          echo "Test services starting in background..."
           
-          # Wait and check container status
-          sleep 10
-          echo "Container status:"
-          docker ps -a | grep pipeline-mysql-test || true
+          # Test if Docker can access the file by trying a simple mount
+          echo "Testing file mount accessibility..."
+          docker run --rm -v $(pwd)/init-mysql-ci.sql:/test.sql alpine:latest ls -la /test.sql || echo "File mount test failed"
           
-          # Show MySQL logs regardless of status
-          echo "MySQL container logs:"
-          docker logs pipeline-mysql-test || echo "Could not get MySQL logs"
+          # Try to start MySQL container alone first to see specific error
+          echo "Starting MySQL container..."
+          docker compose -f compose-test-services.yml up mysql-test --no-deps || echo "MySQL startup failed"
+          
+          # Show logs immediately
+          echo "MySQL logs:"
+          docker logs pipeline-mysql-test 2>&1 || echo "No MySQL logs available"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
