@@ -33,15 +33,10 @@ services:
     command:
       # Performance optimizations for test environment (NOT for production!)
       - --innodb-flush-log-at-trx-commit=0
-      - --innodb-flush-method=O_DIRECT_NO_FSYNC
       - --innodb-doublewrite=0
-      - --sync-binlog=0
       - --skip-log-bin
-      - --skip-log-slave-updates
       - --performance-schema=0
-      - --innodb-buffer-pool-size=128M
-      - --key-buffer-size=32M
-      - --max-connections=50
+      - --innodb-buffer-pool-size=256M
     ports:
       - "3307:3306"  # Test port (dev uses 3306)
     volumes:
