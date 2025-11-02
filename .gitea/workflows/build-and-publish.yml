@@ -19,7 +19,9 @@ jobs:
 
       - name: Start test services
         run: |
-          cd src/test/resources
+          cd $GITHUB_WORKSPACE/src/test/resources
+          pwd
+          ls -la init-mysql.sql
           docker compose -f compose-test-services.yml up -d
           echo "Test services starting in background..."
 
