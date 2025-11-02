@@ -53,21 +53,35 @@ jobs:
       - name: Wait for test services to be healthy
         run: |
           cd src/test/resources
-          echo "Waiting for services to be ready..."
+          echo "Waiting for MySQL to start..."
           
           # Wait for MySQL to be healthy
           timeout 60 bash -c 'until docker exec pipeline-mysql-test mysqladmin ping -h localhost --silent; do echo "Waiting for MySQL..."; sleep 2; done'
           echo "MySQL is ready"
           
+          # Check if init script was executed
+          echo "Checking if databases were created..."
+          docker exec pipeline-mysql-test mysql -u root -prootpassword -e "SHOW DATABASES;"
+          
+          echo "Checking pipeline user permissions..."
+          docker exec pipeline-mysql-test mysql -u root -prootpassword -e "SELECT User, Host FROM mysql.user WHERE User='pipeline';"
+          
+          echo "Testing pipeline user access to apicurio_registry..."
+          docker exec pipeline-mysql-test mysql -u pipeline -ppassword -e "USE apicurio_registry; SHOW TABLES;" || echo "Pipeline user cannot access apicurio_registry database"
+          
           # Wait for Kafka to be healthy  
           timeout 60 bash -c 'until docker exec pipeline-kafka-test rpk cluster health | grep -q "Healthy.*true"; do echo "Waiting for Kafka..."; sleep 2; done'
           echo "Kafka is ready"
           
-          # Wait for Apicurio to be healthy
-          timeout 60 bash -c 'until curl -f http://localhost:8082/health >/dev/null 2>&1; do echo "Waiting for Apicurio..."; sleep 2; done'
-          echo "Apicurio is ready"
+          # Check Apicurio logs before waiting
+          echo "Apicurio logs:"
+          docker logs pipeline-apicurio-registry-test --tail 20
           
-          echo "All services are healthy and ready for tests"
+          # Wait for Apicurio to be healthy (shorter timeout since we know the issue)
+          timeout 30 bash -c 'until curl -f http://localhost:8082/health >/dev/null 2>&1; do echo "Waiting for Apicurio..."; sleep 2; done' || echo "Apicurio failed to start"
+          
+          echo "Final service status:"
+          docker ps --filter "name=pipeline-"
 
       - name: Run tests with Gradle
         env:
