@@ -101,7 +101,7 @@ jobs:
           MP_MESSAGING_CONNECTOR_SMALLRYE_KAFKA_APICURIO_REGISTRY_URL: http://172.17.0.1:8082/apis/registry/v3
           MP_MESSAGING_OUTGOING_ACCOUNT_EVENTS_APICURIO_REGISTRY_URL: http://172.17.0.1:8082/apis/registry/v3
 
-        run: ./gradlew clean build --no-daemon --warn --configuration-cache
+        run: ./gradlew clean build --no-daemon --warn --configuration-cache -Dkafka.bootstrap.servers=172.17.0.1:9095 -Dmp.messaging.connector.smallrye-kafka.bootstrap.servers=172.17.0.1:9095 -Dmp.messaging.outgoing.account-events.bootstrap.servers=172.17.0.1:9095
 
       - name: Stop test services
         if: always()
