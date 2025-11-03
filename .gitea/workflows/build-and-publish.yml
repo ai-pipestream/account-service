@@ -23,7 +23,7 @@ jobs:
       - name: Start test services
         run: |
           cd src/test/resources
-          docker compose -f compose-test-services.yml up -d
+          docker compose -f compose-test-services-ci.yml up -d || (docker compose logs && exit 1)
 
       - name: Wait for test services
         run: |
