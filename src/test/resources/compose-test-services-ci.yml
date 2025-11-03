@@ -10,11 +10,9 @@ networks:
 volumes:
   mysql_test_data:
     driver: local
-  minio_test_data:
+  mysql_apicurio_data:
     driver: local
   kafka_test_data:
-    driver: local
-  redis_test_data:
     driver: local
 
 services:
@@ -38,7 +36,6 @@ services:
       - --skip-log-bin
       - --performance-schema=0
       - --innodb-buffer-pool-size=256M
-      - --init-file=/tmp/init.sql
     ports:
       - "3307:3306"  # Test port (dev uses 3306)
     volumes:
@@ -54,6 +51,21 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  # Init service to create Apicurio database (schema auto-created by Apicurio)
+  init-db:
+    image: mysql:8.0
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+    command: >
+      mysql -h mysql-test -u root -prootpassword -e "
+      CREATE DATABASE IF NOT EXISTS apicurio_registry;
+      GRANT ALL PRIVILEGES ON apicurio_registry.* TO 'pipeline'@'%';
+      FLUSH PRIVILEGES;
+      "
+    networks:
+      - pipeline-test-network
 
   # Redpanda for Kafka-compatible messaging (test instance - faster than Kafka!)
   kafka-test:
@@ -98,10 +110,15 @@ services:
       - pipeline-test-network
     ports:
       - "8082:8080"     # Test port (dev uses 8081)
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
     environment:
       APICURIO_DATASOURCE_URL: 'jdbc:mysql://mysql-test:3306/apicurio_registry'
       APICURIO_DATASOURCE_USERNAME: 'pipeline'
       APICURIO_DATASOURCE_PASSWORD: 'password'
+      # Auto-initialize schema (default: true, but explicit for clarity)
+      APICURIO_SQL_INIT: 'true'
       APICURIO_STORAGE_KIND: 'sql'
       APICURIO_STORAGE_SQL_KIND: 'mysql'
       QUARKUS_HTTP_PORT: 8080
@@ -109,9 +126,6 @@ services:
       LOG_LEVEL: 'INFO'
       QUARKUS_HTTP_CORS_ORIGINS: '*'
       QUARKUS_PROFILE: 'prod'
-    depends_on:
-      mysql-test:
-        condition: service_healthy
     labels:
       # Wait for Apicurio to be ready before considering service started
       io.quarkus.devservices.compose.wait_for.logs: ".*Listening on.*"

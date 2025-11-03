@@ -101,6 +101,8 @@ services:
       APICURIO_DATASOURCE_URL: 'jdbc:mysql://mysql-test:3306/apicurio_registry'
       APICURIO_DATASOURCE_USERNAME: 'pipeline'
       APICURIO_DATASOURCE_PASSWORD: 'password'
+      # Auto-initialize schema (default: true, but explicit for clarity)
+      APICURIO_SQL_INIT: 'true'
       APICURIO_STORAGE_KIND: 'sql'
       APICURIO_STORAGE_SQL_KIND: 'mysql'
       QUARKUS_HTTP_PORT: 8080
