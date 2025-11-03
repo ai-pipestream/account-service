@@ -80,8 +80,10 @@ services:
       # Wait for Redpanda to be ready (~1 second startup!)
       io.quarkus.devservices.compose.wait_for.logs: ".*Successfully started Redpanda!.*"
       # Map the exposed port to kafka.bootstrap.servers property
-      # Commented out to prevent compose devservices from setting just the port number
-      # io.quarkus.devservices.compose.config_map.9094: kafka.bootstrap.servers
+      # Commented out to prevent compose devservices from setting just the port number (it sets just "9095", not "172.17.0.1:9095")
+      # We override with full 172.17.0.1:9095 address via environment variables in CI
+      # Correct format (when enabled): io.quarkus.devservices.compose.config_map.port.9094: kafka.bootstrap.servers
+      # io.quarkus.devservices.compose.config_map.port.9094: kafka.bootstrap.servers
     healthcheck:
       test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
       interval: 3s
