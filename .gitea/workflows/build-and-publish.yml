@@ -40,6 +40,9 @@ jobs:
           # Fix Apicurio MySQL URL for DinD environment (use Docker gateway IP and host port)
           sed -i "s|mysql-test:3306|172.17.0.1:3307|g" compose-test-services-ci.yml
           
+          # Destroy any existing containers first to ensure clean start (removes old labels)
+          docker compose -f compose-test-services-ci.yml down -v || true
+          
           # Start services with CI compose file
           docker compose -f compose-test-services-ci.yml up -d
           echo "Test services starting in background..."
