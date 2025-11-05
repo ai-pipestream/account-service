@@ -60,7 +60,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: build-libs
-          path: build/libs/
+          path: |
+            build/libs/
+            build/quarkus-app/
           retention-days: 1
 
       - name: Publish to Reposilite and Gitea
@@ -103,7 +105,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-libs
-          path: build/libs/
+          path: build/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -121,6 +123,8 @@ jobs:
           QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GIT_TOKEN }}
           REPOS_PAT: ${{ secrets.REPOS_PAT }}
         run: |
-          ./gradlew quarkusImageBuild quarkusImagePush \
+          ./gradlew build \
+            -Dquarkus.container-image.build=true \
+            -Dquarkus.container-image.push=true \
             -Dquarkus.container-image.additional-tags=${{ gitea.sha }} \
             --no-daemon
