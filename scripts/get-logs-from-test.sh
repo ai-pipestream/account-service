@@ -4,12 +4,12 @@
 # Usage: ./getLatestLogsFromCI.sh [run_number]
 #
 # Environment variables:
-#   GITEA_PAT - Required for authentication
+#   GIT_PAT - Required for authentication
 #   DEV_ASSETS_LOCATION - Path to dev-assets directory (optional)
 #
 # Example:
-#   GITEA_PAT=your_token ./getLatestLogsFromCI.sh
-#   GITEA_PAT=your_token ./getLatestLogsFromCI.sh 50
+#   GIT_PAT=your_token ./getLatestLogsFromCI.sh
+#   GIT_PAT=your_token ./getLatestLogsFromCI.sh 50
 
 set -e
 
