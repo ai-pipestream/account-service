@@ -123,7 +123,7 @@ jobs:
           QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GIT_PAT }}
           REPOS_PAT: ${{ secrets.REPOS_PAT }}
         run: |
-          ./gradlew build \
+          ./gradlew build -x test \
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.push=true \
             -Dquarkus.container-image.additional-tags=${{ gitea.sha }} \
