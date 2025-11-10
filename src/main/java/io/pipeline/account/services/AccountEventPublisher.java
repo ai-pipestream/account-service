@@ -15,19 +15,60 @@ import java.util.UUID;
 
 /**
  * Publisher for account lifecycle events to Kafka.
- * Events are published in protobuf format with Apicurio schema validation.
+ * <p>
+ * This service publishes account-related events (created, updated, inactivated, reactivated)
+ * to a Kafka topic for consumption by other services in the platform. Events are published
+ * in protobuf format with Apicurio schema registry validation.
+ * <p>
+ * The event publisher is designed to be fire-and-forget - failures in event publishing
+ * do not prevent the underlying account operations from succeeding. This ensures that
+ * core account management remains reliable even if event infrastructure is unavailable.
+ * <p>
+ * Thread Safety: This class is application-scoped and thread-safe. The MutinyEmitter
+ * handles concurrent event publishing internally.
+ * <p>
+ * <b>Event Format:</b>
+ * <ul>
+ *   <li>Event ID: Generated hash based on account ID, operation, and timestamp</li>
+ *   <li>Kafka Key: Account ID (ensures all events for an account go to same partition)</li>
+ *   <li>Topic: account-events</li>
+ *   <li>Payload: Protobuf AccountEvent message</li>
+ * </ul>
+ *
+ * @see AccountEvent
+ * @see io.smallrye.reactive.messaging.kafka.api.OutgoingKafkaRecordMetadata
  */
 @ApplicationScoped
 public class AccountEventPublisher {
 
     private static final Logger LOG = Logger.getLogger(AccountEventPublisher.class);
-    
+
+    /**
+     * Mutiny emitter for publishing account events to the "account-events" Kafka topic.
+     * <p>
+     * This emitter is configured via the application.properties reactive messaging settings
+     * and connects to the Kafka broker specified in the configuration.
+     */
     @Inject
     @Channel("account-events")
     MutinyEmitter<AccountEvent> accountEventEmitter;
     
     /**
-     * Publish account created event.
+     * Publish an account created event to Kafka.
+     * <p>
+     * This event notifies downstream services that a new account has been created in the system.
+     * The event includes the account's name and description for services that need to
+     * track account metadata.
+     * <p>
+     * The event is published asynchronously using fire-and-forget semantics. If publishing fails,
+     * an error is logged and a RuntimeException is thrown, but the account creation itself
+     * has already succeeded.
+     *
+     * @param accountId the unique identifier of the created account (used as Kafka message key)
+     * @param name the display name of the account
+     * @param description optional description of the account (empty string if null)
+     * @return Cancellable that can be used to cancel the publishing operation
+     * @throws RuntimeException if the event cannot be published to Kafka
      */
     public Cancellable publishAccountCreated(String accountId, String name, String description) {
         try {
@@ -61,7 +102,21 @@ public class AccountEventPublisher {
     }
     
     /**
-     * Publish account updated event.
+     * Publish an account updated event to Kafka.
+     * <p>
+     * This event notifies downstream services that an account's metadata (name or description)
+     * has been modified. Services that maintain cached account information can use this event
+     * to refresh their caches.
+     * <p>
+     * The event is published asynchronously using fire-and-forget semantics. If publishing fails,
+     * an error is logged and a RuntimeException is thrown, but the account update itself
+     * has already succeeded.
+     *
+     * @param accountId the unique identifier of the updated account (used as Kafka message key)
+     * @param name the new display name of the account
+     * @param description the new description of the account (empty string if null)
+     * @return Cancellable that can be used to cancel the publishing operation
+     * @throws RuntimeException if the event cannot be published to Kafka
      */
     public Cancellable publishAccountUpdated(String accountId, String name, String description) {
         try {
@@ -95,7 +150,23 @@ public class AccountEventPublisher {
     }
     
     /**
-     * Publish account inactivated event.
+     * Publish an account inactivated event to Kafka.
+     * <p>
+     * This event notifies downstream services that an account has been soft-deleted (inactivated).
+     * Services should stop accepting new operations for this account and may need to clean up
+     * or archive associated resources.
+     * <p>
+     * The event includes the reason for inactivation, which can be useful for audit trails
+     * and understanding why accounts were disabled.
+     * <p>
+     * The event is published asynchronously using fire-and-forget semantics. If publishing fails,
+     * an error is logged and a RuntimeException is thrown, but the account inactivation itself
+     * has already succeeded.
+     *
+     * @param accountId the unique identifier of the inactivated account (used as Kafka message key)
+     * @param reason the reason for inactivation (empty string if null)
+     * @return Cancellable that can be used to cancel the publishing operation
+     * @throws RuntimeException if the event cannot be published to Kafka
      */
     public Cancellable publishAccountInactivated(String accountId, String reason) {
         try {
@@ -128,7 +199,23 @@ public class AccountEventPublisher {
     }
     
     /**
-     * Publish account reactivated event.
+     * Publish an account reactivated event to Kafka.
+     * <p>
+     * This event notifies downstream services that a previously inactivated account has been
+     * reactivated and is now available for normal operations again. Services that previously
+     * stopped accepting operations for this account can resume normal processing.
+     * <p>
+     * The event includes the reason for reactivation, which can be useful for audit trails
+     * and understanding the account lifecycle.
+     * <p>
+     * The event is published asynchronously using fire-and-forget semantics. If publishing fails,
+     * an error is logged and a RuntimeException is thrown, but the account reactivation itself
+     * has already succeeded.
+     *
+     * @param accountId the unique identifier of the reactivated account (used as Kafka message key)
+     * @param reason the reason for reactivation (empty string if null)
+     * @return Cancellable that can be used to cancel the publishing operation
+     * @throws RuntimeException if the event cannot be published to Kafka
      */
     public Cancellable publishAccountReactivated(String accountId, String reason) {
         try {
@@ -161,7 +248,21 @@ public class AccountEventPublisher {
     }
     
     /**
-     * Generate deterministic event ID: hash(account_id + operation + timestamp_millis)
+     * Generate a unique event ID for tracking and deduplication.
+     * <p>
+     * The event ID is generated by hashing the combination of account ID, operation type,
+     * and current timestamp in milliseconds. While not cryptographically secure, this
+     * provides sufficient uniqueness for event tracking and correlation.
+     * <p>
+     * The hash ensures the event ID is compact and suitable for logging and debugging.
+     * The timestamp component ensures that different events for the same account will
+     * have different IDs.
+     * <p>
+     * <b>Format:</b> {@code String.valueOf(hash(accountId + operation + timestampMillis))}
+     *
+     * @param accountId the account identifier being operated on
+     * @param operation the type of operation (e.g., "created", "updated", "inactivated")
+     * @return a string representation of the hash code as the event ID
      */
     private String generateEventId(String accountId, String operation) {
         long timestampMillis = System.currentTimeMillis();

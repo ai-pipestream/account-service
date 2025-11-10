@@ -41,9 +41,21 @@ import org.jboss.logging.Logger;
 public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceImplBase {
 
     private static final Logger LOG = Logger.getLogger(AccountServiceImpl.class);
+
+    /**
+     * Default number of accounts to return per page when page size is not specified.
+     */
     private static final int DEFAULT_PAGE_SIZE = 50;
+
+    /**
+     * Maximum number of accounts that can be returned in a single page.
+     * Requests for larger page sizes will be clamped to this value.
+     */
     private static final int MAX_PAGE_SIZE = 200;
 
+    /**
+     * Repository for account data access and business logic.
+     */
     @Inject
     AccountRepository accountRepository;
 
@@ -51,6 +63,9 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
     // @Inject
     // S3Client s3Client;
 
+    /**
+     * Publisher for account lifecycle events to Kafka.
+     */
     @Inject
     AccountEventPublisher eventPublisher;
 
@@ -248,6 +263,30 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
+    /**
+     * List accounts with optional filtering and pagination.
+     * <p>
+     * This method supports:
+     * <ul>
+     *   <li>Text search across account ID and name fields</li>
+     *   <li>Filtering to include or exclude inactive accounts</li>
+     *   <li>Pagination with configurable page size</li>
+     *   <li>Total count for pagination metadata</li>
+     * </ul>
+     * <p>
+     * The page token is a simple offset-based implementation using string-encoded integers.
+     * Results are ordered by creation time (newest first).
+     * <p>
+     * Page size constraints:
+     * <ul>
+     *   <li>Default: 50 accounts</li>
+     *   <li>Maximum: 200 accounts</li>
+     *   <li>Values outside this range are clamped</li>
+     * </ul>
+     *
+     * @param request ListAccountsRequest with optional query, includeInactive flag, pageSize, and pageToken
+     * @return ListAccountsResponse with matching accounts, total count, and next page token if more results exist
+     */
     @Override
     public Uni<ListAccountsResponse> listAccounts(ListAccountsRequest request) {
         return Uni.createFrom().item(() -> {
@@ -299,6 +338,25 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
+    /**
+     * Update an account's mutable fields (name and description).
+     * <p>
+     * This method allows updating the display name and description of an existing account.
+     * The account ID cannot be changed. Both name and description must be provided in the
+     * request, even if only one is being changed.
+     * <p>
+     * The update is idempotent - updating an account with the same values it already has
+     * will succeed without error, though the repository may skip the database update if
+     * no changes are detected.
+     * <p>
+     * On successful update, an account updated event is published to Kafka for downstream
+     * services to consume.
+     *
+     * @param request UpdateAccountRequest with account_id, name, and description
+     * @return UpdateAccountResponse with the updated account
+     * @throws IllegalArgumentException if account_id is empty or name is empty
+     * @throws io.grpc.StatusRuntimeException with NOT_FOUND if account doesn't exist
+     */
     @Override
     public Uni<UpdateAccountResponse> updateAccount(UpdateAccountRequest request) {
         return Uni.createFrom().item(() -> {
@@ -354,6 +412,23 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
     }
     */
 
+    /**
+     * Convert an Account entity to a protobuf Account message.
+     * <p>
+     * This method handles the mapping between the JPA entity representation
+     * and the gRPC protobuf representation, including:
+     * <ul>
+     *   <li>Null-safe handling of the active field (defaults to false if null)</li>
+     *   <li>Null-safe handling of description (defaults to empty string if null)</li>
+     *   <li>Conversion of OffsetDateTime to protobuf Timestamp for createdAt and updatedAt</li>
+     * </ul>
+     * <p>
+     * Timestamp conversion extracts epoch seconds and nanoseconds from the OffsetDateTime
+     * to build the protobuf Timestamp structure.
+     *
+     * @param account the JPA entity to convert
+     * @return the protobuf Account message representation
+     */
     private io.pipeline.repository.account.Account toProtoAccount(Account account) {
         boolean isActive = account.active != null ? account.active : false;
         String description = account.description != null ? account.description : "";

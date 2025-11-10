@@ -322,6 +322,65 @@ public class AccountServiceTest {
 }
 ```
 
+## Documentation
+
+### Javadocs
+
+The codebase includes comprehensive Javadocs for all public classes, methods, and fields. The documentation follows standard Javadoc conventions and includes:
+
+- **Class-level documentation** - Overview of purpose, behavior, and usage patterns
+- **Method documentation** - Parameters, return values, exceptions, and behavioral notes
+- **Field documentation** - Purpose and constraints for important fields
+- **Examples and cross-references** - Where applicable, links to related classes and usage examples
+
+#### Generating Javadocs
+
+To generate HTML Javadocs for the project:
+
+```bash
+./gradlew :applications:account-manager:javadoc
+```
+
+The generated documentation will be available in:
+```
+build/docs/javadoc/index.html
+```
+
+#### Key Documented Classes
+
+##### Entity Layer
+- **Account** (`io.pipeline.account.entity.Account`)
+  - JPA entity representing a tenant account
+  - Documents all fields including timestamps, active status, and identifiers
+  - Includes constructor documentation for entity creation patterns
+
+##### Repository Layer
+- **AccountRepository** (`io.pipeline.account.repository.AccountRepository`)
+  - Transactional data access methods for accounts
+  - Documents idempotency guarantees for create and inactivate operations
+  - Explains soft-delete semantics and query patterns
+
+##### Service Layer
+- **AccountServiceImpl** (`io.pipeline.account.services.AccountServiceImpl`)
+  - gRPC service implementation for account management
+  - Documents proto ↔ entity mapping and reactive patterns
+  - Includes error handling and validation documentation
+
+- **AccountEventPublisher** (`io.pipeline.account.services.AccountEventPublisher`)
+  - Kafka event publishing for account lifecycle events
+  - Documents event format, fire-and-forget semantics, and failure handling
+  - Explains event ID generation and Kafka message structure
+
+#### Documentation Standards
+
+The javadocs follow these conventions:
+
+1. **Behavioral Documentation** - Methods document not just what they do, but how they handle edge cases, errors, and concurrency
+2. **Idempotency** - All idempotent operations clearly state their idempotency guarantees
+3. **Thread Safety** - Transactional and concurrent behavior is documented where relevant
+4. **Reactive Patterns** - Worker thread execution and Mutiny patterns are explained
+5. **Proto Mapping** - Timestamp conversions and null handling in entity ↔ proto mapping is documented
+
 ## Dependencies
 
 - **Quarkus gRPC** - gRPC server and client support
