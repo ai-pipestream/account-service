@@ -55,3 +55,11 @@ quarkus.log
 
 # Artifactory compose (contains secrets)
 dev-assets/docker/gitea-runner/artifactory-compose.yml
+.claude
+.claude*
+logs
+*.log
+tmp/
+temp/
+.secure
+.cache/

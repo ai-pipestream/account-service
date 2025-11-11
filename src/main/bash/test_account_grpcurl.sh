@@ -29,12 +29,12 @@ grpcurl -plaintext localhost:38105 list
 echo
 
 echo "Available AccountService methods:"
-grpcurl -plaintext localhost:38105 list io.pipeline.repository.account.AccountService
+grpcurl -plaintext localhost:38105 list ai.pipestream.repository.account.AccountService
 echo
 
 echo -e "${YELLOW}2. Testing CreateAccount${NC}"
 echo "Creating account: $ACCOUNT_ID"
-CREATE_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\",\"name\":\"Test Account\",\"description\":\"Testing gRPC endpoint\"}" localhost:38105 io.pipeline.repository.account.AccountService/CreateAccount)
+CREATE_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\",\"name\":\"Test Account\",\"description\":\"Testing gRPC endpoint\"}" localhost:38105 ai.pipestream.repository.account.AccountService/CreateAccount)
 echo "$CREATE_RESPONSE"
 echo
 
@@ -49,7 +49,7 @@ echo
 
 echo -e "${YELLOW}3. Testing GetAccount (Active Account)${NC}"
 echo "Getting account: $ACCOUNT_ID"
-GET_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\"}" localhost:38105 io.pipeline.repository.account.AccountService/GetAccount)
+GET_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\"}" localhost:38105 ai.pipestream.repository.account.AccountService/GetAccount)
 echo "$GET_RESPONSE"
 echo
 
@@ -64,7 +64,7 @@ echo
 
 echo -e "${YELLOW}4. Testing InactivateAccount${NC}"
 echo "Inactivating account: $ACCOUNT_ID"
-INACTIVATE_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\",\"reason\":\"Testing inactivation\"}" localhost:38105 io.pipeline.repository.account.AccountService/InactivateAccount)
+INACTIVATE_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\",\"reason\":\"Testing inactivation\"}" localhost:38105 ai.pipestream.repository.account.AccountService/InactivateAccount)
 echo "$INACTIVATE_RESPONSE"
 echo
 
@@ -79,7 +79,7 @@ echo
 
 echo -e "${YELLOW}5. Testing GetAccount (Inactive Account)${NC}"
 echo "Getting inactive account: $ACCOUNT_ID"
-GET_INACTIVE_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\"}" localhost:38105 io.pipeline.repository.account.AccountService/GetAccount)
+GET_INACTIVE_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\"}" localhost:38105 ai.pipestream.repository.account.AccountService/GetAccount)
 echo "$GET_INACTIVE_RESPONSE"
 echo
 
@@ -95,7 +95,7 @@ echo
 echo -e "${YELLOW}6. Testing Error Cases${NC}"
 
 echo "Testing GetAccount with non-existent account:"
-NOT_FOUND_RESPONSE=$(grpcurl -plaintext -d '{"account_id":"non-existent-account"}' localhost:38105 io.pipeline.repository.account.AccountService/GetAccount 2>&1 || true)
+NOT_FOUND_RESPONSE=$(grpcurl -plaintext -d '{"account_id":"non-existent-account"}' localhost:38105 ai.pipestream.repository.account.AccountService/GetAccount 2>&1 || true)
 echo "$NOT_FOUND_RESPONSE"
 if echo "$NOT_FOUND_RESPONSE" | grep -q "NOT_FOUND\|not found"; then
     echo -e "${GREEN}✓ Error handling test passed - NOT_FOUND returned for non-existent account${NC}"
@@ -105,7 +105,7 @@ fi
 echo
 
 echo "Testing CreateAccount with empty name:"
-INVALID_RESPONSE=$(grpcurl -plaintext -d '{"account_id":"test-invalid","name":"","description":"Empty name test"}' localhost:38105 io.pipeline.repository.account.AccountService/CreateAccount 2>&1 || true)
+INVALID_RESPONSE=$(grpcurl -plaintext -d '{"account_id":"test-invalid","name":"","description":"Empty name test"}' localhost:38105 ai.pipestream.repository.account.AccountService/CreateAccount 2>&1 || true)
 echo "$INVALID_RESPONSE"
 if echo "$INVALID_RESPONSE" | grep -q "INVALID_ARGUMENT\|invalid"; then
     echo -e "${GREEN}✓ Error handling test passed - INVALID_ARGUMENT returned for empty name${NC}"
@@ -116,7 +116,7 @@ echo
 
 echo -e "${YELLOW}7. Testing Idempotency${NC}"
 echo "Creating account with same ID again (should return existing account):"
-IDEMPOTENT_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\",\"name\":\"Different Name\",\"description\":\"Different description\"}" localhost:38105 io.pipeline.repository.account.AccountService/CreateAccount)
+IDEMPOTENT_RESPONSE=$(grpcurl -plaintext -d "{\"account_id\":\"$ACCOUNT_ID\",\"name\":\"Different Name\",\"description\":\"Different description\"}" localhost:38105 ai.pipestream.repository.account.AccountService/CreateAccount)
 echo "$IDEMPOTENT_RESPONSE"
 echo
 

@@ -53,9 +53,9 @@
       "schedule": ["every weekend"]
     },
     {
-      "description": "Pin internal io.pipeline dependencies (managed by BOM)",
+      "description": "Pin internal ai.pipestream dependencies (managed by BOM)",
       "matchDatasources": ["maven"],
-      "matchPackagePatterns": ["^io\\.pipeline"],
+      "matchPackagePatterns": ["^ai\\.pipestream"],
       "enabled": false
     }
   ],
