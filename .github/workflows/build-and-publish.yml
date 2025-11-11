@@ -102,7 +102,7 @@ jobs:
       - name: Build and push Docker image with Quarkus
         env:
           QUARKUS_CONTAINER_IMAGE_REGISTRY: ghcr.io
-          QUARKUS_CONTAINER_IMAGE_GROUP: io-pipeline
+          QUARKUS_CONTAINER_IMAGE_GROUP: ai-pipestream
           QUARKUS_CONTAINER_IMAGE_USERNAME: ${{ github.actor }}
           QUARKUS_CONTAINER_IMAGE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -112,6 +112,6 @@ jobs:
             -Dquarkus.container-image.build=true \
             -Dquarkus.container-image.push=true \
             -Dquarkus.container-image.registry=ghcr.io \
-            -Dquarkus.container-image.group=io-pipeline \
+            -Dquarkus.container-image.group=ai-pipestream \
             -Dquarkus.container-image.additional-tags=${{ github.sha }} \
             --no-daemon

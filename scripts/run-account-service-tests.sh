@@ -35,7 +35,7 @@ fi
 
 # Check Maven Local artifacts
 echo "Checking required artifacts in Maven Local..."
-MAVEN_LOCAL=~/.m2/repository/io/pipeline
+MAVEN_LOCAL=~/.m2/repository/ai/pipestream
 
 if [ -d "$MAVEN_LOCAL/pipeline-bom-catalog" ]; then
     echo "✅ pipeline-bom-catalog found"
@@ -49,10 +49,10 @@ else
     echo "❌ grpc-stubs NOT found"
 fi
 
-if [ -d "$MAVEN_LOCAL/devservices-docker-compose" ]; then
-    echo "✅ devservices-docker-compose found"
+if [ -d "$MAVEN_LOCAL/devservices" ]; then
+    echo "✅ devservices found"
 else
-    echo "❌ devservices-docker-compose NOT found"
+    echo "❌ devservices NOT found"
 fi
 
 echo ""
@@ -88,5 +88,6 @@ else
 fi
 
 exit $TEST_EXIT_CODE
+
 
 

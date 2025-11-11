@@ -65,7 +65,7 @@ message CreateAccountResponse {
 **Example:**
 ```bash
 grpcurl -plaintext -d '{"account_id":"acme-corp","name":"Acme Corporation","description":"Test account"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/CreateAccount
+  localhost:38105 ai.pipestream.repository.account.AccountService/CreateAccount
 ```
 
 ### GetAccount
@@ -97,7 +97,7 @@ message Account {
 **Example:**
 ```bash
 grpcurl -plaintext -d '{"account_id":"acme-corp"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/GetAccount
+  localhost:38105 ai.pipestream.repository.account.AccountService/GetAccount
 ```
 
 ### InactivateAccount
@@ -129,7 +129,7 @@ message InactivateAccountResponse {
 **Example:**
 ```bash
 grpcurl -plaintext -d '{"account_id":"acme-corp","reason":"Account closure"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/InactivateAccount
+  localhost:38105 ai.pipestream.repository.account.AccountService/InactivateAccount
 ```
 
 ## Database Schema
@@ -206,15 +206,15 @@ Call methods:
 ```bash
 # Create account
 grpcurl -plaintext -d '{"account_id":"test-123","name":"Test Account"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/CreateAccount
+  localhost:38105 ai.pipestream.repository.account.AccountService/CreateAccount
 
 # Get account
 grpcurl -plaintext -d '{"account_id":"test-123"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/GetAccount
+  localhost:38105 ai.pipestream.repository.account.AccountService/GetAccount
 
 # Inactivate account
 grpcurl -plaintext -d '{"account_id":"test-123","reason":"Testing"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/InactivateAccount
+  localhost:38105 ai.pipestream.repository.account.AccountService/InactivateAccount
 ```
 
 ## Implementation Details
@@ -349,24 +349,24 @@ build/docs/javadoc/index.html
 #### Key Documented Classes
 
 ##### Entity Layer
-- **Account** (`io.pipeline.account.entity.Account`)
+- **Account** (`ai.pipestream.account.entity.Account`)
   - JPA entity representing a tenant account
   - Documents all fields including timestamps, active status, and identifiers
   - Includes constructor documentation for entity creation patterns
 
 ##### Repository Layer
-- **AccountRepository** (`io.pipeline.account.repository.AccountRepository`)
+- **AccountRepository** (`ai.pipestream.account.repository.AccountRepository`)
   - Transactional data access methods for accounts
   - Documents idempotency guarantees for create and inactivate operations
   - Explains soft-delete semantics and query patterns
 
 ##### Service Layer
-- **AccountServiceImpl** (`io.pipeline.account.services.AccountServiceImpl`)
+- **AccountServiceImpl** (`ai.pipestream.account.services.AccountServiceImpl`)
   - gRPC service implementation for account management
   - Documents proto ↔ entity mapping and reactive patterns
   - Includes error handling and validation documentation
 
-- **AccountEventPublisher** (`io.pipeline.account.services.AccountEventPublisher`)
+- **AccountEventPublisher** (`ai.pipestream.account.services.AccountEventPublisher`)
   - Kafka event publishing for account lifecycle events
   - Documents event format, fire-and-forget semantics, and failure handling
   - Explains event ID generation and Kafka message structure
