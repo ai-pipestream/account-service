@@ -107,7 +107,11 @@ jobs:
           else
             # Get current version from axion-release
             CURRENT=$(./gradlew currentVersion -q --no-daemon | tail -1)
-            echo "Current version: $CURRENT"
+            echo "Raw version output: $CURRENT"
+
+            # Strip "Project version: " prefix if present
+            CURRENT=${CURRENT#Project version: }
+            echo "Parsed version: $CURRENT"
 
             # Remove -SNAPSHOT suffix if present
             CURRENT=${CURRENT%-SNAPSHOT}
