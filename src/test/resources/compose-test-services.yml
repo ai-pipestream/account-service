@@ -40,7 +40,7 @@ services:
       # Wait for MySQL to be ready before considering service started
       io.quarkus.devservices.compose.wait_for.logs: ".*ready for connections.*"
       # Map MySQL JDBC URL to datasource property
-      io.quarkus.devservices.compose.config_map.jdbc_url: quarkus.datasource.jdbc.url
+      #io.quarkus.devservices.compose.config_map.jdbc_url: quarkus.datasource.jdbc.url
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 3s

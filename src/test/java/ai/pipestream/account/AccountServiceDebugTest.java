@@ -1,10 +1,10 @@
 package ai.pipestream.account;
 
-import ai.pipestream.grpc.wiremock.MockServiceTestResource;
-import ai.pipestream.repository.account.AccountServiceGrpc;
-import ai.pipestream.repository.account.CreateAccountRequest;
-import ai.pipestream.repository.account.GetAccountRequest;
-import ai.pipestream.repository.account.InactivateAccountRequest;
+import ai.pipestream.account.util.WireMockTestResource;
+import ai.pipestream.repository.v1.account.AccountServiceGrpc;
+import ai.pipestream.repository.v1.account.CreateAccountRequest;
+import ai.pipestream.repository.v1.account.GetAccountRequest;
+import ai.pipestream.repository.v1.account.InactivateAccountRequest;
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * for the active field in both active and inactive accounts.
  */
 @QuarkusTest
-@QuarkusTestResource(MockServiceTestResource.class)
+@QuarkusTestResource(WireMockTestResource.class)
 public class AccountServiceDebugTest {
 
     @GrpcClient("account-manager")
@@ -52,10 +52,10 @@ public class AccountServiceDebugTest {
                 .setAccountId(testAccountId)
                 .build();
 
-        var activeAccount = accountService.getAccount(getRequest);
+        var activeResponse = accountService.getAccount(getRequest);
         System.out.println("=== ACTIVE ACCOUNT ===");
-        System.out.println("Active: " + activeAccount.getActive());
-        System.out.println("toString: " + activeAccount.toString());
+        System.out.println("Active: " + activeResponse.getAccount().getActive());
+        System.out.println("toString: " + activeResponse.getAccount().toString());
         System.out.println();
 
         // Inactivate the account
@@ -71,19 +71,19 @@ public class AccountServiceDebugTest {
         System.out.println();
 
         // Get the inactive account
-        var inactiveAccount = accountService.getAccount(getRequest);
+        var inactiveResponse = accountService.getAccount(getRequest);
         System.out.println("=== INACTIVE ACCOUNT ===");
-        System.out.println("Active: " + inactiveAccount.getActive());
-        System.out.println("toString: " + inactiveAccount.toString());
+        System.out.println("Active: " + inactiveResponse.getAccount().getActive());
+        System.out.println("toString: " + inactiveResponse.getAccount().toString());
         System.out.println();
 
         // Verify the behavior
-        assertTrue(activeAccount.getActive(), "Active account should have active=true");
-        assertFalse(inactiveAccount.getActive(), "Inactive account should have active=false");
+        assertTrue(activeResponse.getAccount().getActive(), "Active account should have active=true");
+        assertFalse(inactiveResponse.getAccount().getActive(), "Inactive account should have active=false");
         
         // The key test: both should have the active field accessible
         // (even if it's not shown in grpcurl JSON output)
-        assertNotNull(activeAccount.getActive());
-        assertNotNull(inactiveAccount.getActive());
+        assertNotNull(activeResponse.getAccount().getActive());
+        assertNotNull(inactiveResponse.getAccount().getActive());
     }
 }

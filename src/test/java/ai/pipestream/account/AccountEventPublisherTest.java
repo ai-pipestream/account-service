@@ -1,9 +1,9 @@
 package ai.pipestream.account;
 
-import ai.pipestream.grpc.wiremock.MockServiceTestResource;
-import ai.pipestream.repository.account.AccountEvent;
-import ai.pipestream.repository.account.AccountServiceGrpc;
-import ai.pipestream.repository.account.CreateAccountRequest;
+import ai.pipestream.account.util.WireMockTestResource;
+import ai.pipestream.repository.v1.account.AccountEvent;
+import ai.pipestream.repository.v1.account.AccountServiceGrpc;
+import ai.pipestream.repository.v1.account.CreateAccountRequest;
 
 // Standard Kafka and Apicurio classes
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
-@QuarkusTestResource(MockServiceTestResource.class)
+@QuarkusTestResource(WireMockTestResource.class)
 public class AccountEventPublisherTest {
 
     @GrpcClient("account-manager")
@@ -44,6 +44,11 @@ public class AccountEventPublisherTest {
     @ConfigProperty(name = "mp.messaging.outgoing.account-events.apicurio.registry.url")
     String apicurioRegistryUrl;
 
+    // TODO: BUG - Test consumer should use UUID key deserializer, not
+    // StringDeserializer
+    // The actual producer uses Record<UUID, AccountEvent> but this test uses
+    // String.
+    // This should be KafkaConsumer<UUID, AccountEvent> with UUIDDeserializer.
     private KafkaConsumer<String, AccountEvent> createConsumer() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -55,11 +60,13 @@ public class AccountEventPublisherTest {
         // Apicurio specific properties
         props.put("apicurio.registry.url", apicurioRegistryUrl);
 
-        // We are now using the exact same property as your working opensearch-manager consumer
+        // We are now using the exact same property as your working opensearch-manager
+        // consumer
         props.put("apicurio.registry.deserializer.value.return-class", AccountEvent.class.getName());
 
         return new KafkaConsumer<>(props);
     }
+
     @Test
     public void testAccountCreatedEventIsPublished() {
         // ARRANGE: Create a unique ID for this specific test run
@@ -92,6 +99,7 @@ public class AccountEventPublisherTest {
     /**
      * Helper method for Awaitility. It polls Kafka once and looks for a message
      * with a specific accountId.
+     * 
      * @return The found AccountEvent, or null if not found in this poll.
      */
     private AccountEvent pollForMessage(KafkaConsumer<String, AccountEvent> consumer, String accountId) {

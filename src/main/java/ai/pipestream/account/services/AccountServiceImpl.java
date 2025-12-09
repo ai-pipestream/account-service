@@ -2,18 +2,19 @@ package ai.pipestream.account.services;
 
 import com.google.protobuf.Timestamp;
 import io.grpc.Status;
-import ai.pipestream.repository.account.CreateAccountRequest;
-import ai.pipestream.repository.account.CreateAccountResponse;
-import ai.pipestream.repository.account.GetAccountRequest;
-import ai.pipestream.repository.account.InactivateAccountRequest;
-import ai.pipestream.repository.account.InactivateAccountResponse;
-import ai.pipestream.repository.account.ListAccountsRequest;
-import ai.pipestream.repository.account.ListAccountsResponse;
-import ai.pipestream.repository.account.MutinyAccountServiceGrpc;
-import ai.pipestream.repository.account.ReactivateAccountRequest;
-import ai.pipestream.repository.account.ReactivateAccountResponse;
-import ai.pipestream.repository.account.UpdateAccountRequest;
-import ai.pipestream.repository.account.UpdateAccountResponse;
+import ai.pipestream.repository.v1.account.CreateAccountRequest;
+import ai.pipestream.repository.v1.account.CreateAccountResponse;
+import ai.pipestream.repository.v1.account.GetAccountRequest;
+import ai.pipestream.repository.v1.account.GetAccountResponse;
+import ai.pipestream.repository.v1.account.InactivateAccountRequest;
+import ai.pipestream.repository.v1.account.InactivateAccountResponse;
+import ai.pipestream.repository.v1.account.ListAccountsRequest;
+import ai.pipestream.repository.v1.account.ListAccountsResponse;
+import ai.pipestream.repository.v1.account.MutinyAccountServiceGrpc;
+import ai.pipestream.repository.v1.account.ReactivateAccountRequest;
+import ai.pipestream.repository.v1.account.ReactivateAccountResponse;
+import ai.pipestream.repository.v1.account.UpdateAccountRequest;
+import ai.pipestream.repository.v1.account.UpdateAccountResponse;
 import ai.pipestream.account.entity.Account;
 import ai.pipestream.account.repository.AccountRepository;
 import io.quarkus.grpc.GrpcService;
@@ -145,7 +146,7 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
      * @throws io.grpc.StatusRuntimeException with NOT_FOUND if account doesn't exist
      */
     @Override
-    public Uni<ai.pipestream.repository.account.Account> getAccount(GetAccountRequest request) {
+    public Uni<GetAccountResponse> getAccount(GetAccountRequest request) {
         return Uni.createFrom().item(() -> {
             LOG.infof("Getting account: accountId=%s", request.getAccountId());
 
@@ -159,7 +160,9 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
             LOG.infof("Account found - ID: %s, Active: %s, Active type: %s", 
                 account.accountId, account.active, account.active != null ? account.active.getClass().getSimpleName() : "null");
 
-            return toProtoAccount(account);
+            return GetAccountResponse.newBuilder()
+                .setAccount(toProtoAccount(account))
+                .build();
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
@@ -360,11 +363,11 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
     }
     */
 
-    private ai.pipestream.repository.account.Account toProtoAccount(Account account) {
+    private ai.pipestream.repository.v1.account.Account toProtoAccount(Account account) {
         boolean isActive = account.active != null ? account.active : false;
         String description = account.description != null ? account.description : "";
 
-        return ai.pipestream.repository.account.Account.newBuilder()
+        return ai.pipestream.repository.v1.account.Account.newBuilder()
             .setAccountId(account.accountId)
             .setName(account.name)
             .setDescription(description)

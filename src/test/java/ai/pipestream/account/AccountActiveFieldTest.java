@@ -2,7 +2,7 @@ package ai.pipestream.account;
 
 import ai.pipestream.account.entity.Account;
 import ai.pipestream.account.repository.AccountRepository;
-import ai.pipestream.grpc.wiremock.MockServiceTestResource;
+import ai.pipestream.account.util.WireMockTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * and that inactive accounts are correctly identified.
  */
 @QuarkusTest
-@QuarkusTestResource(MockServiceTestResource.class)
+@QuarkusTestResource(WireMockTestResource.class)
 public class AccountActiveFieldTest {
 
     @Inject
