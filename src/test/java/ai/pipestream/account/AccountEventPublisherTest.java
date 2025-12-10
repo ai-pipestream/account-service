@@ -4,30 +4,20 @@ import ai.pipestream.account.util.WireMockTestResource;
 import ai.pipestream.repository.v1.account.AccountEvent;
 import ai.pipestream.repository.v1.account.AccountServiceGrpc;
 import ai.pipestream.repository.v1.account.CreateAccountRequest;
-
-// Standard Kafka and Apicurio classes
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
-import io.apicurio.registry.serde.protobuf.ProtobufKafkaDeserializer;
-
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-// Awaitility and Hamcrest Matchers
-import org.awaitility.Awaitility;
-import org.hamcrest.Matchers;
-
-import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
@@ -37,34 +27,12 @@ public class AccountEventPublisherTest {
     @GrpcClient("account-manager")
     AccountServiceGrpc.AccountServiceBlockingStub accountService;
 
-    // Inject config properties to build our test consumer
-    @ConfigProperty(name = "kafka.bootstrap.servers")
-    String bootstrapServers;
+    @Inject
+    TestConsumer testConsumer;
 
-    @ConfigProperty(name = "mp.messaging.outgoing.account-events.apicurio.registry.url")
-    String apicurioRegistryUrl;
-
-    // TODO: BUG - Test consumer should use UUID key deserializer, not
-    // StringDeserializer
-    // The actual producer uses Record<UUID, AccountEvent> but this test uses
-    // String.
-    // This should be KafkaConsumer<UUID, AccountEvent> with UUIDDeserializer.
-    private KafkaConsumer<String, AccountEvent> createConsumer() {
-        Properties props = new Properties();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group-" + System.currentTimeMillis());
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ProtobufKafkaDeserializer.class.getName());
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-
-        // Apicurio specific properties
-        props.put("apicurio.registry.url", apicurioRegistryUrl);
-
-        // We are now using the exact same property as your working opensearch-manager
-        // consumer
-        props.put("apicurio.registry.deserializer.value.return-class", AccountEvent.class.getName());
-
-        return new KafkaConsumer<>(props);
+    @BeforeEach
+    void setup() {
+        testConsumer.clear();
     }
 
     @Test
@@ -72,43 +40,50 @@ public class AccountEventPublisherTest {
         // ARRANGE: Create a unique ID for this specific test run
         String testAccountId = "test-kafka-create-" + System.currentTimeMillis();
 
-        try (KafkaConsumer<String, AccountEvent> consumer = createConsumer()) {
-            consumer.subscribe(Collections.singletonList("account-events"));
+        // ACT: Call the gRPC endpoint which should produce the message
+        var request = CreateAccountRequest.newBuilder()
+                .setAccountId(testAccountId)
+                .setName("Kafka Test Account")
+                .build();
+        accountService.createAccount(request);
 
-            // ACT: Call the gRPC endpoint which should produce the message
-            var request = CreateAccountRequest.newBuilder()
-                    .setAccountId(testAccountId)
-                    .setName("Kafka Test Account")
-                    .build();
-            accountService.createAccount(request);
+        // ASSERT: Use Awaitility to poll until we find our specific message
+        await()
+                .atMost(10, TimeUnit.SECONDS)
+                .pollInterval(100, TimeUnit.MILLISECONDS)
+                .until(() -> testConsumer.hasReceived(testAccountId));
 
-            // ASSERT: Use Awaitility to poll until we find our specific message
-            AccountEvent foundEvent = Awaitility.await()
-                    .atMost(10, TimeUnit.SECONDS)
-                    .pollInterval(100, TimeUnit.MILLISECONDS)
-                    .until(() -> pollForMessage(consumer, testAccountId), Matchers.notNullValue());
-
-            // Perform final assertions on the message we found
-            assertNotNull(foundEvent);
-            assertTrue(foundEvent.hasCreated(), "Event should be a Created event");
-            assertEquals("Kafka Test Account", foundEvent.getCreated().getName());
-            assertEquals(testAccountId, foundEvent.getAccountId());
-        }
+        // Perform final assertions
+        AccountEvent foundEvent = testConsumer.getEvent(testAccountId);
+        assertNotNull(foundEvent);
+        assertTrue(foundEvent.hasCreated(), "Event should be a Created event");
+        assertEquals("Kafka Test Account", foundEvent.getCreated().getName());
+        assertEquals(testAccountId, foundEvent.getAccountId());
     }
 
-    /**
-     * Helper method for Awaitility. It polls Kafka once and looks for a message
-     * with a specific accountId.
-     * 
-     * @return The found AccountEvent, or null if not found in this poll.
-     */
-    private AccountEvent pollForMessage(KafkaConsumer<String, AccountEvent> consumer, String accountId) {
-        ConsumerRecords<String, AccountEvent> records = consumer.poll(Duration.ofMillis(100));
-        for (ConsumerRecord<String, AccountEvent> record : records) {
-            if (record.value().getAccountId().equals(accountId)) {
-                return record.value(); // Found it!
-            }
+    @ApplicationScoped
+    public static class TestConsumer {
+        private final List<AccountEvent> received = new CopyOnWriteArrayList<>();
+
+        @Incoming("test-account-events")
+        public void consume(AccountEvent event) {
+            received.add(event);
         }
-        return null; // Didn't find it
+
+        public boolean hasReceived(String accountId) {
+            return received.stream()
+                    .anyMatch(event -> event.getAccountId().equals(accountId));
+        }
+
+        public AccountEvent getEvent(String accountId) {
+            return received.stream()
+                    .filter(event -> event.getAccountId().equals(accountId))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        public void clear() {
+            received.clear();
+        }
     }
 }

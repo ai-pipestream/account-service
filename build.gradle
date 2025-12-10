@@ -130,6 +130,12 @@ java {
 test {
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
     environment "TESTCONTAINERS_RYUK_DISABLED", "false"
+
+    // Add JVM option for JDK 24+
+    def javaVersion = JavaVersion.current().majorVersion.toInteger()
+    if (javaVersion >= 24) {
+        jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED'
+    }
 }
 
 compileJava {
