@@ -1,7 +1,6 @@
 package ai.pipestream.account;
 
-import ai.pipestream.grpc.wiremock.MockServiceTestResource;
-import ai.pipestream.repository.account.*;
+import ai.pipestream.repository.v1.account.*;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.grpc.GrpcClient;
@@ -12,8 +11,10 @@ import java.time.Instant;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+import ai.pipestream.account.util.WireMockTestResource;
+
 @QuarkusTest
-@QuarkusTestResource(MockServiceTestResource.class)
+@QuarkusTestResource(WireMockTestResource.class)
 public class AccountServiceTest {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -88,25 +89,25 @@ public class AccountServiceTest {
                 .setAccountId(testAccountId)
                 .build();
 
-        var account = accountService.getAccount(getRequest);
+        var response = accountService.getAccount(getRequest);
         
         assertThat("Retrieved account ID should match",
-                account.getAccountId(), equalTo(testAccountId));
+                response.getAccount().getAccountId(), equalTo(testAccountId));
         assertThat("Retrieved account name should match",
-                account.getName(), equalTo("Test Get Account"));
+                response.getAccount().getName(), equalTo("Test Get Account"));
         assertThat("Retrieved account description should match",
-                account.getDescription(), equalTo("Test account for get testing"));
+                response.getAccount().getDescription(), equalTo("Test account for get testing"));
         assertThat("Retrieved account should be active",
-                account.getActive(), is(true));
+                response.getAccount().getActive(), is(true));
 
         // Verify timestamps
         assertThat("Retrieved account should have CreatedAt timestamp",
-                account.hasCreatedAt(), is(true));
+                response.getAccount().hasCreatedAt(), is(true));
         assertThat("Retrieved account should have UpdatedAt timestamp",
-                account.hasUpdatedAt(), is(true));
+                response.getAccount().hasUpdatedAt(), is(true));
 
-        long createdAtSeconds = account.getCreatedAt().getSeconds();
-        long updatedAtSeconds = account.getUpdatedAt().getSeconds();
+        long createdAtSeconds = response.getAccount().getCreatedAt().getSeconds();
+        long updatedAtSeconds = response.getAccount().getUpdatedAt().getSeconds();
 
         assertThat("CreatedAt should be within test execution timeframe",
                 createdAtSeconds, allOf(

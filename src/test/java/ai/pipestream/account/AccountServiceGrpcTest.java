@@ -1,12 +1,12 @@
 package ai.pipestream.account;
 
-import ai.pipestream.grpc.wiremock.MockServiceTestResource;
-import ai.pipestream.repository.account.AccountServiceGrpc;
-import ai.pipestream.repository.account.CreateAccountRequest;
-import ai.pipestream.repository.account.GetAccountRequest;
-import ai.pipestream.repository.account.InactivateAccountRequest;
-import ai.pipestream.repository.account.ListAccountsRequest;
-import ai.pipestream.repository.account.UpdateAccountRequest;
+import ai.pipestream.account.util.WireMockTestResource;
+import ai.pipestream.repository.v1.account.AccountServiceGrpc;
+import ai.pipestream.repository.v1.account.CreateAccountRequest;
+import ai.pipestream.repository.v1.account.GetAccountRequest;
+import ai.pipestream.repository.v1.account.InactivateAccountRequest;
+import ai.pipestream.repository.v1.account.ListAccountsRequest;
+import ai.pipestream.repository.v1.account.UpdateAccountRequest;
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.is;
  * returned in gRPC responses for both active and inactive accounts.
  */
 @QuarkusTest
-@QuarkusTestResource(MockServiceTestResource.class)
+@QuarkusTestResource(WireMockTestResource.class)
 public class AccountServiceGrpcTest {
 
     @GrpcClient("account-manager")
@@ -56,15 +56,15 @@ public class AccountServiceGrpcTest {
                 .setAccountId(testAccountId)
                 .build();
 
-        var account = accountService.getAccount(getRequest);
+        var response = accountService.getAccount(getRequest);
 
         // This is the critical test - the active field should be true
         assertThat("Retrieved active account should have active=true field",
-                account.getActive(), is(true));
+                response.getAccount().getActive(), is(true));
         assertThat("Account ID should match the created account",
-                account.getAccountId(), equalTo(testAccountId));
+                response.getAccount().getAccountId(), equalTo(testAccountId));
         assertThat("Account name should match the created account",
-                account.getName(), equalTo("Active Test Account"));
+                response.getAccount().getName(), equalTo("Active Test Account"));
     }
 
     @Test
@@ -98,15 +98,15 @@ public class AccountServiceGrpcTest {
                 .setAccountId(testAccountId)
                 .build();
 
-        var account = accountService.getAccount(getRequest);
+        var response = accountService.getAccount(getRequest);
 
         // This is the critical test - the active field should be false
         assertThat("Retrieved inactive account should have active=false field",
-                account.getActive(), is(false));
+                response.getAccount().getActive(), is(false));
         assertThat("Account ID should match the inactivated account",
-                account.getAccountId(), equalTo(testAccountId));
+                response.getAccount().getAccountId(), equalTo(testAccountId));
         assertThat("Account name should match the inactivated account",
-                account.getName(), equalTo("Inactive Test Account"));
+                response.getAccount().getName(), equalTo("Inactive Test Account"));
     }
 
     @Test
@@ -135,9 +135,9 @@ public class AccountServiceGrpcTest {
             .build());
 
         assertThat("Fetched account should have updated name persisted",
-                fetched.getName(), equalTo("Updated Name"));
+                fetched.getAccount().getName(), equalTo("Updated Name"));
         assertThat("Fetched account should have updated description persisted",
-                fetched.getDescription(), equalTo("Updated description"));
+                fetched.getAccount().getDescription(), equalTo("Updated description"));
     }
 
     @Test
@@ -158,9 +158,9 @@ public class AccountServiceGrpcTest {
                 .setAccountId(testAccountId)
                 .build();
 
-        var activeAccount = accountService.getAccount(getRequest);
+        var activeResponse = accountService.getAccount(getRequest);
         assertThat("Initially retrieved account should be active",
-                activeAccount.getActive(), is(true));
+                activeResponse.getAccount().getActive(), is(true));
 
         // Inactivate account
         var inactivateRequest = InactivateAccountRequest.newBuilder()
@@ -171,15 +171,15 @@ public class AccountServiceGrpcTest {
         accountService.inactivateAccount(inactivateRequest);
 
         // Verify inactive account
-        var inactiveAccount = accountService.getAccount(getRequest);
+        var inactiveResponse = accountService.getAccount(getRequest);
         assertThat("After inactivation, account active field should be false",
-                inactiveAccount.getActive(), is(false));
+                inactiveResponse.getAccount().getActive(), is(false));
 
         // Verify other fields are still present
         assertThat("Account ID should remain consistent after inactivation",
-                inactiveAccount.getAccountId(), equalTo(testAccountId));
+                inactiveResponse.getAccount().getAccountId(), equalTo(testAccountId));
         assertThat("Account name should remain consistent after inactivation",
-                inactiveAccount.getName(), equalTo("Consistency Test Account"));
+                inactiveResponse.getAccount().getName(), equalTo("Consistency Test Account"));
     }
 
     @Test
