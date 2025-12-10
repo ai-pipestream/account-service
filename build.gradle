@@ -21,7 +21,7 @@ scmVersion {
     }
 }
 
-def pipestreamBomVersion = findProperty('pipestreamBomVersion') ?: '0.7.1-new_proto_interface-SNAPSHOT'
+def pipestreamBomVersion = findProperty('pipestreamBomVersion') ?: '0.7.1'
 
 // 1. Define the export path
 def bufExportDir = layout.buildDirectory.dir("generated/buf-protos")
@@ -103,7 +103,7 @@ dependencies {
     // Pipestream platform libraries (managed via BOM/catalog)
     implementation libs.pipestream.devservices
     implementation 'ai.pipestream:quarkus-dynamic-grpc'
-    implementation 'ai.pipestream:pipestream-service-registration:0.7.1-new_proto_interface-SNAPSHOT'
+    implementation 'ai.pipestream:pipestream-service-registration'
 
     // Test dependencies
     testImplementation libs.quarkus.junit5
