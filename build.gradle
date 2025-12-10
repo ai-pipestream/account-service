@@ -147,6 +147,18 @@ compileTestJava {
     options.encoding = 'UTF-8'
 }
 
+// Configure Javadoc task to exclude auto-generated code
+tasks.withType(Javadoc).configureEach { task ->
+    def opts = task.options
+    opts.encoding = 'UTF-8'
+    opts.charSet = 'UTF-8'
+    opts.locale = 'en'
+
+    // Only include actual source code (excludes generated Protobuf/gRPC code)
+    include '**/ai/pipestream/account/**'
+    include '**/ai/pipestream/grpc/**'
+}
+
 // Fix sourcesJar dependency on generated code
 afterEvaluate {
     tasks.named('sourcesJar', Jar) {
