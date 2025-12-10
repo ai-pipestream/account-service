@@ -1,12 +1,12 @@
 package ai.pipestream.account.services;
 
 import ai.pipestream.repository.v1.account.AccountEvent;
+import ai.pipestream.apicurio.registry.protobuf.ProtobufChannel;
 import io.smallrye.mutiny.subscription.Cancellable;
 import io.smallrye.reactive.messaging.MutinyEmitter;
 import io.smallrye.reactive.messaging.kafka.Record;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.jboss.logging.Logger;
 
 import ai.pipestream.grpc.util.KafkaProtobufKeys;
@@ -18,7 +18,8 @@ import java.util.UUID;
  * Publisher for account lifecycle events to Kafka.
  * Events are published in protobuf format with Apicurio schema validation.
  * <p>
- * STRICT TYPING: Keys are strictly enforced as UUIDs via Record&lt;UUID, Value&gt;.
+ * STRICT TYPING: Keys are strictly enforced as UUIDs via Record&lt;UUID,
+ * Value&gt;.
  */
 @ApplicationScoped
 public class AccountEventPublisher {
@@ -33,14 +34,14 @@ public class AccountEventPublisher {
     }
 
     @Inject
-    @Channel("account-events")
+    @ProtobufChannel("account-events")
     MutinyEmitter<Record<UUID, AccountEvent>> accountEventEmitter;
 
     /**
      * Publish account created event.
      *
-     * @param accountId unique identifier for the account
-     * @param name display name of the account
+     * @param accountId   unique identifier for the account
+     * @param name        display name of the account
      * @param description optional account description (may be {@code null})
      * @return a {@link Cancellable} handle for the send operation
      */
@@ -66,8 +67,8 @@ public class AccountEventPublisher {
     /**
      * Publish account updated event.
      *
-     * @param accountId unique identifier for the account
-     * @param name updated display name of the account
+     * @param accountId   unique identifier for the account
+     * @param name        updated display name of the account
      * @param description updated account description (may be {@code null})
      * @return a {@link Cancellable} handle for the send operation
      */
@@ -79,7 +80,7 @@ public class AccountEventPublisher {
                             .setDescription(description != null ? description : "")
                             .build())
                     .build();
-            
+
             UUID key = KafkaProtobufKeys.uuid(event);
 
             LOG.infof("Publishing account updated event: accountId=%s", accountId);
@@ -94,7 +95,7 @@ public class AccountEventPublisher {
      * Publish account inactivated event.
      *
      * @param accountId unique identifier for the account
-     * @param reason reason for inactivation (may be {@code null})
+     * @param reason    reason for inactivation (may be {@code null})
      * @return a {@link Cancellable} handle for the send operation
      */
     public Cancellable publishAccountInactivated(String accountId, String reason) {
@@ -104,7 +105,7 @@ public class AccountEventPublisher {
                             .setReason(reason != null ? reason : "")
                             .build())
                     .build();
-            
+
             UUID key = KafkaProtobufKeys.uuid(event);
 
             LOG.infof("Publishing account inactivated event: accountId=%s, reason=%s", accountId, reason);
@@ -119,7 +120,7 @@ public class AccountEventPublisher {
      * Publish account reactivated event.
      *
      * @param accountId unique identifier for the account
-     * @param reason reason for reactivation (may be {@code null})
+     * @param reason    reason for reactivation (may be {@code null})
      * @return a {@link Cancellable} handle for the send operation
      */
     public Cancellable publishAccountReactivated(String accountId, String reason) {
@@ -129,7 +130,7 @@ public class AccountEventPublisher {
                             .setReason(reason != null ? reason : "")
                             .build())
                     .build();
-            
+
             UUID key = KafkaProtobufKeys.uuid(event);
 
             LOG.infof("Publishing account reactivated event: accountId=%s, reason=%s", accountId, reason);
@@ -154,7 +155,8 @@ public class AccountEventPublisher {
     }
 
     /**
-     * Generate deterministic event ID: hash(account_id + operation + timestamp_millis)
+     * Generate deterministic event ID: hash(account_id + operation +
+     * timestamp_millis)
      */
     private String generateEventId(String accountId, String operation) {
         long timestampMillis = System.currentTimeMillis();

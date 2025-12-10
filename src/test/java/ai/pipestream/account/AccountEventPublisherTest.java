@@ -4,12 +4,12 @@ import ai.pipestream.account.util.WireMockTestResource;
 import ai.pipestream.repository.v1.account.AccountEvent;
 import ai.pipestream.repository.v1.account.AccountServiceGrpc;
 import ai.pipestream.repository.v1.account.CreateAccountRequest;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
