@@ -26,6 +26,7 @@ jobs:
       custom_version: ${{ inputs.custom_version }}
       docker-image-name: account-service
       maven-artifact-id: account-service
+      dockerfile-path: src/main/docker/Dockerfile.jvm
     secrets:
       BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}

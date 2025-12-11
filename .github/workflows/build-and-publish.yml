@@ -11,6 +11,7 @@ jobs:
     uses: ai-pipestream/.github/.github/workflows/reusable-service-build.yml@main
     with:
       docker-image-name: account-service
+      dockerfile-path: src/main/docker/Dockerfile.jvm
     secrets:
       BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
       GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
