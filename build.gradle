@@ -21,7 +21,7 @@ scmVersion {
     }
 }
 
-def pipestreamBomVersion = findProperty('pipestreamBomVersion') ?: '0.7.2-SNAPSHOT'
+def pipestreamBomVersion = findProperty('pipestreamBomVersion') ?: '0.7.3'
 
 // 1. Define the export path
 def bufExportDir = layout.buildDirectory.dir("generated/buf-protos")
@@ -93,7 +93,7 @@ dependencies {
     // Kafka dependencies
     implementation 'io.quarkus:quarkus-messaging-kafka'
     // Updated Apicurio dependency
-    implementation 'ai.pipestream:quarkus-apicurio-registry-protobuf:0.7.3-SNAPSHOT'
+    implementation libs.quarkus.apicurio.registry.protobuf
 
     // Service Discovery dependencies for Consul
     implementation 'io.smallrye.stork:stork-service-discovery-consul'
