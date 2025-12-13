@@ -2,25 +2,21 @@ package ai.pipestream.account.services;
 
 import ai.pipestream.repository.v1.account.AccountEvent;
 import ai.pipestream.apicurio.registry.protobuf.ProtobufChannel;
-import io.smallrye.mutiny.subscription.Cancellable;
-import io.smallrye.reactive.messaging.MutinyEmitter;
-import io.smallrye.reactive.messaging.kafka.Record;
+import ai.pipestream.apicurio.registry.protobuf.ProtobufEmitter;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
-import ai.pipestream.grpc.util.KafkaProtobufKeys;
-
 import java.time.Instant;
-import java.util.UUID;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Publisher for account lifecycle events to Kafka.
  * Events are published in protobuf format with Apicurio schema validation.
  * <p>
- * STRICT TYPING: Keys are strictly enforced as UUIDs via Record&lt;UUID,
- * Value&gt;.
+ * STRICT TYPING: Keys are strictly enforced as UUIDs via ProtobufEmitter.
  */
+@SuppressWarnings("UnusedReturnValue")
 @ApplicationScoped
 public class AccountEventPublisher {
 
@@ -35,7 +31,7 @@ public class AccountEventPublisher {
 
     @Inject
     @ProtobufChannel("account-events")
-    MutinyEmitter<Record<UUID, AccountEvent>> accountEventEmitter;
+    ProtobufEmitter<AccountEvent> accountEventEmitter;
 
     /**
      * Publish account created event.
@@ -43,9 +39,9 @@ public class AccountEventPublisher {
      * @param accountId   unique identifier for the account
      * @param name        display name of the account
      * @param description optional account description (may be {@code null})
-     * @return a {@link Cancellable} handle for the send operation
+     * @return a {@link CompletionStage} handle for the send operation
      */
-    public Cancellable publishAccountCreated(String accountId, String name, String description) {
+    public CompletionStage<Void> publishAccountCreated(String accountId, String name, String description) {
         try {
             AccountEvent event = buildBaseEvent(accountId, "created")
                     .setCreated(AccountEvent.Created.newBuilder()
@@ -54,10 +50,8 @@ public class AccountEventPublisher {
                             .build())
                     .build();
 
-            UUID key = KafkaProtobufKeys.uuid(event);
-
-            LOG.infof("Publishing account created event: accountId=%s (UUID: %s)", accountId, key);
-            return accountEventEmitter.sendAndForget(Record.of(key, event));
+            LOG.infof("Publishing account created event: accountId=%s", accountId);
+            return accountEventEmitter.send(event);
         } catch (Exception e) {
             LOG.errorf(e, "Error publishing account created event: accountId=%s", accountId);
             throw new RuntimeException("Failed to publish account created event", e);
@@ -70,9 +64,10 @@ public class AccountEventPublisher {
      * @param accountId   unique identifier for the account
      * @param name        updated display name of the account
      * @param description updated account description (may be {@code null})
-     * @return a {@link Cancellable} handle for the send operation
+     * @return a {@link CompletionStage} handle for the send operation
      */
-    public Cancellable publishAccountUpdated(String accountId, String name, String description) {
+    @SuppressWarnings("UnusedReturnValue")
+    public CompletionStage<Void> publishAccountUpdated(String accountId, String name, String description) {
         try {
             AccountEvent event = buildBaseEvent(accountId, "updated")
                     .setUpdated(AccountEvent.Updated.newBuilder()
@@ -81,10 +76,8 @@ public class AccountEventPublisher {
                             .build())
                     .build();
 
-            UUID key = KafkaProtobufKeys.uuid(event);
-
             LOG.infof("Publishing account updated event: accountId=%s", accountId);
-            return accountEventEmitter.sendAndForget(Record.of(key, event));
+            return accountEventEmitter.send(event);
         } catch (Exception e) {
             LOG.errorf(e, "Error publishing account updated event: accountId=%s", accountId);
             throw new RuntimeException("Failed to publish account updated event", e);
@@ -96,9 +89,9 @@ public class AccountEventPublisher {
      *
      * @param accountId unique identifier for the account
      * @param reason    reason for inactivation (may be {@code null})
-     * @return a {@link Cancellable} handle for the send operation
+     * @return a {@link CompletionStage} handle for the send operation
      */
-    public Cancellable publishAccountInactivated(String accountId, String reason) {
+    public CompletionStage<Void> publishAccountInactivated(String accountId, String reason) {
         try {
             AccountEvent event = buildBaseEvent(accountId, "inactivated")
                     .setInactivated(AccountEvent.Inactivated.newBuilder()
@@ -106,10 +99,8 @@ public class AccountEventPublisher {
                             .build())
                     .build();
 
-            UUID key = KafkaProtobufKeys.uuid(event);
-
             LOG.infof("Publishing account inactivated event: accountId=%s, reason=%s", accountId, reason);
-            return accountEventEmitter.sendAndForget(Record.of(key, event));
+            return accountEventEmitter.send(event);
         } catch (Exception e) {
             LOG.errorf(e, "Error publishing account inactivated event: accountId=%s", accountId);
             throw new RuntimeException("Failed to publish account inactivated event", e);
@@ -121,9 +112,9 @@ public class AccountEventPublisher {
      *
      * @param accountId unique identifier for the account
      * @param reason    reason for reactivation (may be {@code null})
-     * @return a {@link Cancellable} handle for the send operation
+     * @return a {@link CompletionStage} handle for the send operation
      */
-    public Cancellable publishAccountReactivated(String accountId, String reason) {
+    public CompletionStage<Void> publishAccountReactivated(String accountId, String reason) {
         try {
             AccountEvent event = buildBaseEvent(accountId, "reactivated")
                     .setReactivated(AccountEvent.Reactivated.newBuilder()
@@ -131,10 +122,8 @@ public class AccountEventPublisher {
                             .build())
                     .build();
 
-            UUID key = KafkaProtobufKeys.uuid(event);
-
             LOG.infof("Publishing account reactivated event: accountId=%s, reason=%s", accountId, reason);
-            return accountEventEmitter.sendAndForget(Record.of(key, event));
+            return accountEventEmitter.send(event);
         } catch (Exception e) {
             LOG.errorf(e, "Error publishing account reactivated event: accountId=%s", accountId);
             throw new RuntimeException("Failed to publish account reactivated event", e);
