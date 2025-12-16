@@ -11,9 +11,10 @@ public class WireMockTestResource implements QuarkusTestResourceLifecycleManager
 
     private GenericContainer<?> wireMockContainer;
 
+    @SuppressWarnings("resource")
     @Override
     public Map<String, String> start() {
-        wireMockContainer = new GenericContainer<>(DockerImageName.parse("pipestreamai/pipestream-wiremock-server:0.1.6"))
+        wireMockContainer = new GenericContainer<>(DockerImageName.parse("pipestreamai/pipestream-wiremock-server:0.1.18"))
                 .withExposedPorts(50052)
                 .waitingFor(Wait.forLogMessage(".*Direct Streaming gRPC Server started.*", 1));
         

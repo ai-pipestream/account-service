@@ -5,8 +5,9 @@ plugins {
     alias(libs.plugins.quarkus)
     alias(libs.plugins.maven.publish)
     id 'signing'
-    id 'com.gradleup.nmcp' version '1.3.0'
-    id 'pl.allegro.tech.build.axion-release' version '1.21.1'
+    alias(libs.plugins.nmcp.single)
+    alias(libs.plugins.axion.release)
+    id 'ai.pipestream.proto-toolchain' version '0.7.6'
 }
 
 // Semantic versioning with axion-release
@@ -21,62 +22,25 @@ scmVersion {
     }
 }
 
-def pipestreamBomVersion = findProperty('pipestreamBomVersion') ?: '0.7.3'
+// Proto toolchain configuration - fetches from Git and generates Java/gRPC code
+pipestreamProtos {
+    sourceMode = 'git'
 
-// 1. Define the export path
-def bufExportDir = layout.buildDirectory.dir("generated/buf-protos")
-
-// 2. The Sync Tasks
-tasks.register('syncAccountProtos', Exec) {
-    group = 'protobuf'
-    description = 'Exports account proto files from Buf Registry'
-    commandLine 'buf', 'export', 'buf.build/pipestreamai/admin',
-            '--output', bufExportDir.get().asFile.path
-    outputs.dir(bufExportDir)
-    doFirst {
-        bufExportDir.get().asFile.mkdirs()
-    }
-}
-
-tasks.register('syncProtos') {
-    group = 'protobuf'
-    description = 'Syncs all proto definitions from Buf Registry'
-    dependsOn 'syncAccountProtos'
-}
-
-// 3. Configure Quarkus to find the protos
-quarkus {
-    // Use 'proto-directory', not 'proto-source-path'
-    quarkusBuildProperties.put("quarkus.grpc.codegen.proto-directory", bufExportDir.get().asFile.path)
-    // Enable gRPC code generation scanning
-    quarkusBuildProperties.put("quarkus.grpc.codegen.enabled", "true")
-}
-
-// 4. CRITICAL: Fix Build Order & IDE Visibility
-sourceSets {
-    main {
-        java {
-            // Tell IntelliJ/Gradle where Quarkus puts the generated Java files
-            srcDir layout.buildDirectory.dir("classes/java/quarkus-generated-sources/grpc")
+    modules {
+        register("admin") {
+            gitRepo = "https://github.com/ai-pipestream/pipestream-protos.git"
+            gitRef = "main"
+            gitSubdir = "admin"
         }
     }
 }
 
-// 5. Hook into the correct Quarkus tasks
-// We must run syncProtos BEFORE Quarkus tries to generate code
-tasks.named('quarkusGenerateCode').configure {
-    dependsOn 'syncProtos'
-}
-tasks.named('quarkusGenerateCodeDev').configure {
-    dependsOn 'syncProtos'
-}
-tasks.named('quarkusGenerateCodeTests').configure {
-    dependsOn 'syncProtos'
-}
-
 dependencies {
-    implementation 'io.quarkus:quarkus-container-image-docker'
+    // Import pipeline BOM to align all managed versions
+    // Version defined in gradle.properties as single source of truth
     implementation platform("ai.pipestream:pipestream-bom:${pipestreamBomVersion}")
+    
+    implementation 'io.quarkus:quarkus-container-image-docker'
 
     // Core Quarkus dependencies
     implementation libs.quarkus.arc
@@ -92,24 +56,24 @@ dependencies {
 
     // Kafka dependencies
     implementation 'io.quarkus:quarkus-messaging-kafka'
-    // Updated Apicurio dependency
-    implementation libs.quarkus.apicurio.registry.protobuf
+    // Quarkus Apicurio Registry Protobuf Extension (Zero-Config)
+    // Version managed by pipestream-bom
+    implementation 'ai.pipestream:quarkus-apicurio-registry-protobuf'
 
     // Service Discovery dependencies for Consul
     implementation 'io.smallrye.stork:stork-service-discovery-consul'
     implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-consul-client'
     implementation 'io.smallrye.stork:stork-service-registration-consul'
 
-    // Pipestream platform libraries (managed via BOM/catalog)
-    implementation libs.pipestream.devservices
+    // Pipestream platform libraries (managed via BOM)
+    // Pipestream devservices extension - version managed by pipestream-bom
+    implementation 'ai.pipestream:pipestream-quarkus-devservices'
     implementation 'ai.pipestream:quarkus-dynamic-grpc'
     implementation 'ai.pipestream:pipestream-service-registration'
 
     // Test dependencies
     testImplementation libs.quarkus.junit5
     testImplementation libs.rest.assured
-    // Pending discussion on Wiremock server
-    // testImplementation libs.wiremock.grpc.extension.standalone
     testImplementation libs.awaitility
     testImplementation libs.apicurio.registry.protobuf.serde
     testImplementation platform('org.testcontainers:testcontainers-bom:2.0.1')
@@ -159,12 +123,6 @@ tasks.withType(Javadoc).configureEach { task ->
     include '**/ai/pipestream/grpc/**'
 }
 
-// Fix sourcesJar dependency on generated code
-afterEvaluate {
-    tasks.named('sourcesJar', Jar) {
-        dependsOn 'quarkusGenerateCode'
-    }
-}
 
 // Publishing configuration
 publishing {
