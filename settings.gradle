@@ -10,7 +10,7 @@ rootProject.name = 'account-service'
 dependencyResolutionManagement {
     versionCatalogs {
         libs {
-            from("ai.pipestream:pipestream-bom-catalog:0.7.8")
+            from("ai.pipestream:pipestream-bom-catalog:0.7.9")
         }
     }
 
