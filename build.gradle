@@ -76,7 +76,7 @@ dependencies {
     testImplementation libs.rest.assured
     testImplementation libs.awaitility
     testImplementation libs.apicurio.registry.protobuf.serde
-    testImplementation platform('org.testcontainers:testcontainers-bom:2.0.1')
+    // Testcontainers - version managed by pipestream-bom
     testImplementation 'org.testcontainers:testcontainers'
 }
 
