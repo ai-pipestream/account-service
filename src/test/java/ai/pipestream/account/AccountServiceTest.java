@@ -1,6 +1,6 @@
 package ai.pipestream.account;
 
-import ai.pipestream.repository.v1.account.*;
+import ai.pipestream.repository.account.v1.*;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.grpc.GrpcClient;

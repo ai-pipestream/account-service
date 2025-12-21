@@ -1,6 +1,6 @@
 package ai.pipestream.grpc.util;
 
-import ai.pipestream.repository.v1.account.AccountEvent;
+import ai.pipestream.repository.account.v1.AccountEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;

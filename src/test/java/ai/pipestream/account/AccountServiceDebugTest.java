@@ -1,10 +1,10 @@
 package ai.pipestream.account;
 
 import ai.pipestream.account.util.WireMockTestResource;
-import ai.pipestream.repository.v1.account.AccountServiceGrpc;
-import ai.pipestream.repository.v1.account.CreateAccountRequest;
-import ai.pipestream.repository.v1.account.GetAccountRequest;
-import ai.pipestream.repository.v1.account.InactivateAccountRequest;
+import ai.pipestream.repository.account.v1.AccountServiceGrpc;
+import ai.pipestream.repository.account.v1.CreateAccountRequest;
+import ai.pipestream.repository.account.v1.GetAccountRequest;
+import ai.pipestream.repository.account.v1.InactivateAccountRequest;
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;

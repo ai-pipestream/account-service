@@ -2,19 +2,19 @@ package ai.pipestream.account.services;
 
 import com.google.protobuf.Timestamp;
 import io.grpc.Status;
-import ai.pipestream.repository.v1.account.CreateAccountRequest;
-import ai.pipestream.repository.v1.account.CreateAccountResponse;
-import ai.pipestream.repository.v1.account.GetAccountRequest;
-import ai.pipestream.repository.v1.account.GetAccountResponse;
-import ai.pipestream.repository.v1.account.InactivateAccountRequest;
-import ai.pipestream.repository.v1.account.InactivateAccountResponse;
-import ai.pipestream.repository.v1.account.ListAccountsRequest;
-import ai.pipestream.repository.v1.account.ListAccountsResponse;
-import ai.pipestream.repository.v1.account.MutinyAccountServiceGrpc;
-import ai.pipestream.repository.v1.account.ReactivateAccountRequest;
-import ai.pipestream.repository.v1.account.ReactivateAccountResponse;
-import ai.pipestream.repository.v1.account.UpdateAccountRequest;
-import ai.pipestream.repository.v1.account.UpdateAccountResponse;
+import ai.pipestream.repository.account.v1.CreateAccountRequest;
+import ai.pipestream.repository.account.v1.CreateAccountResponse;
+import ai.pipestream.repository.account.v1.GetAccountRequest;
+import ai.pipestream.repository.account.v1.GetAccountResponse;
+import ai.pipestream.repository.account.v1.InactivateAccountRequest;
+import ai.pipestream.repository.account.v1.InactivateAccountResponse;
+import ai.pipestream.repository.account.v1.ListAccountsRequest;
+import ai.pipestream.repository.account.v1.ListAccountsResponse;
+import ai.pipestream.repository.account.v1.MutinyAccountServiceGrpc;
+import ai.pipestream.repository.account.v1.ReactivateAccountRequest;
+import ai.pipestream.repository.account.v1.ReactivateAccountResponse;
+import ai.pipestream.repository.account.v1.UpdateAccountRequest;
+import ai.pipestream.repository.account.v1.UpdateAccountResponse;
 import ai.pipestream.account.entity.Account;
 import ai.pipestream.account.repository.AccountRepository;
 import io.quarkus.grpc.GrpcService;
@@ -363,11 +363,11 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
     }
     */
 
-    private ai.pipestream.repository.v1.account.Account toProtoAccount(Account account) {
+    private ai.pipestream.repository.account.v1.Account toProtoAccount(Account account) {
         boolean isActive = account.active != null ? account.active : false;
         String description = account.description != null ? account.description : "";
 
-        return ai.pipestream.repository.v1.account.Account.newBuilder()
+        return ai.pipestream.repository.account.v1.Account.newBuilder()
             .setAccountId(account.accountId)
             .setName(account.name)
             .setDescription(description)

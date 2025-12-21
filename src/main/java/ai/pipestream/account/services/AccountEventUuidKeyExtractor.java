@@ -1,7 +1,7 @@
 package ai.pipestream.account.services;
 
 import ai.pipestream.apicurio.registry.protobuf.UuidKeyExtractor;
-import ai.pipestream.repository.v1.account.AccountEvent;
+import ai.pipestream.repository.account.v1.AccountEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import java.util.UUID;

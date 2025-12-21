@@ -1,9 +1,9 @@
 package ai.pipestream.account;
 
 import ai.pipestream.account.util.WireMockTestResource;
-import ai.pipestream.repository.v1.account.AccountEvent;
-import ai.pipestream.repository.v1.account.AccountServiceGrpc;
-import ai.pipestream.repository.v1.account.CreateAccountRequest;
+import ai.pipestream.repository.account.v1.AccountEvent;
+import ai.pipestream.repository.account.v1.AccountServiceGrpc;
+import ai.pipestream.repository.account.v1.CreateAccountRequest;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.test.common.QuarkusTestResource;

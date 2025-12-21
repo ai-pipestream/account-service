@@ -1,6 +1,6 @@
 package ai.pipestream.account.services;
 
-import ai.pipestream.repository.v1.account.AccountEvent;
+import ai.pipestream.repository.account.v1.AccountEvent;
 import ai.pipestream.apicurio.registry.protobuf.ProtobufChannel;
 import ai.pipestream.apicurio.registry.protobuf.ProtobufEmitter;
 import jakarta.enterprise.context.ApplicationScoped;
