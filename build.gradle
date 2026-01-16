@@ -7,7 +7,7 @@ plugins {
     id 'signing'
     alias(libs.plugins.nmcp.single)
     alias(libs.plugins.axion.release)
-    id 'ai.pipestream.proto-toolchain' version '0.7.8'
+    alias(libs.plugins.proto.toolchain)
 }
 
 // Semantic versioning with axion-release
