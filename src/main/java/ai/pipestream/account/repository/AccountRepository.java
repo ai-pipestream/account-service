@@ -236,6 +236,38 @@ public class AccountRepository {
     }
 
     /**
+     * List all accounts with optional filtering.
+     *
+     * @param query optional partial search against accountId and name
+     * @param includeInactive whether to include inactive accounts
+     * @return list of matching accounts
+     */
+    @Transactional
+    public java.util.List<Account> listAllAccounts(String query, boolean includeInactive) {
+        StringBuilder jpql = new StringBuilder("SELECT a FROM Account a");
+        boolean hasCondition = false;
+
+        if (query != null && !query.isBlank()) {
+            jpql.append(" WHERE (LOWER(a.accountId) LIKE :query OR LOWER(a.name) LIKE :query)");
+            hasCondition = true;
+        }
+
+        if (!includeInactive) {
+            jpql.append(hasCondition ? " AND" : " WHERE");
+            jpql.append(" a.active = true");
+        }
+
+        jpql.append(" ORDER BY a.createdAt DESC");
+
+        var typedQuery = entityManager.createQuery(jpql.toString(), Account.class);
+        if (query != null && !query.isBlank()) {
+            typedQuery.setParameter("query", "%" + query.trim().toLowerCase() + "%");
+        }
+
+        return typedQuery.getResultList();
+    }
+
+    /**
      * Count accounts for pagination metadata.
      *
      * @param query optional partial search against accountId and name

@@ -13,11 +13,14 @@ import ai.pipestream.repository.account.v1.ListAccountsResponse;
 import ai.pipestream.repository.account.v1.MutinyAccountServiceGrpc;
 import ai.pipestream.repository.account.v1.ReactivateAccountRequest;
 import ai.pipestream.repository.account.v1.ReactivateAccountResponse;
+import ai.pipestream.repository.account.v1.StreamAllAccountsRequest;
+import ai.pipestream.repository.account.v1.StreamAllAccountsResponse;
 import ai.pipestream.repository.account.v1.UpdateAccountRequest;
 import ai.pipestream.repository.account.v1.UpdateAccountResponse;
 import ai.pipestream.account.entity.Account;
 import ai.pipestream.account.repository.AccountRepository;
 import io.quarkus.grpc.GrpcService;
+import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 import jakarta.inject.Inject;
@@ -306,6 +309,23 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
 
             return builder.build();
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
+    }
+
+    @Override
+    public Multi<StreamAllAccountsResponse> streamAllAccounts(StreamAllAccountsRequest request) {
+        return Uni.createFrom().item(() -> {
+            String rawQuery = request.getQuery();
+            String query = rawQuery != null ? rawQuery.trim() : "";
+            boolean includeInactive = request.getIncludeInactive();
+
+            LOG.debugf("Streaming accounts query=%s includeInactive=%s", query, includeInactive);
+
+            return accountRepository.listAllAccounts(query, includeInactive);
+        }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+            .onItem().transformToMulti(accounts -> Multi.createFrom().iterable(accounts))
+            .onItem().transform(account -> StreamAllAccountsResponse.newBuilder()
+                .setAccount(toProtoAccount(account))
+                .build());
     }
 
     @Override

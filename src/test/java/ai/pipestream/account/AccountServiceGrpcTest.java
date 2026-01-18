@@ -6,6 +6,7 @@ import ai.pipestream.repository.account.v1.CreateAccountRequest;
 import ai.pipestream.repository.account.v1.GetAccountRequest;
 import ai.pipestream.repository.account.v1.InactivateAccountRequest;
 import ai.pipestream.repository.account.v1.ListAccountsRequest;
+import ai.pipestream.repository.account.v1.StreamAllAccountsRequest;
 import ai.pipestream.repository.account.v1.UpdateAccountRequest;
 import io.quarkus.grpc.GrpcClient;
 import io.quarkus.test.common.QuarkusTestResource;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * gRPC integration tests to verify that the active field is properly
@@ -243,5 +246,41 @@ public class AccountServiceGrpcTest {
         assertThat("Results should include the inactive account matching 'mar' when includeInactive=true",
                 response.getAccountsList().stream().anyMatch(a -> a.getAccountId().equals(idPrefix + "-two")),
                 is(true));
+    }
+
+    @Test
+    public void testStreamAllAccountsExcludesInactiveByDefault() {
+        String idPrefix = "grpc-stream-" + System.currentTimeMillis();
+
+        accountService.createAccount(CreateAccountRequest.newBuilder()
+            .setAccountId(idPrefix + "-active")
+            .setName("Stream Active")
+            .build());
+
+        accountService.createAccount(CreateAccountRequest.newBuilder()
+            .setAccountId(idPrefix + "-inactive")
+            .setName("Stream Inactive")
+            .build());
+
+        accountService.inactivateAccount(InactivateAccountRequest.newBuilder()
+            .setAccountId(idPrefix + "-inactive")
+            .setReason("stream test")
+            .build());
+
+        var iterator = accountService.streamAllAccounts(StreamAllAccountsRequest.newBuilder().build());
+        boolean foundActive = false;
+        boolean foundInactive = false;
+        while (iterator.hasNext()) {
+            var account = iterator.next().getAccount();
+            if (account.getAccountId().equals(idPrefix + "-active")) {
+                foundActive = true;
+            }
+            if (account.getAccountId().equals(idPrefix + "-inactive")) {
+                foundInactive = true;
+            }
+        }
+
+        assertTrue(foundActive, "streamAllAccounts should include active accounts by default");
+        assertFalse(foundInactive, "streamAllAccounts should exclude inactive accounts by default");
     }
 }
