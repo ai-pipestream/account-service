@@ -72,6 +72,7 @@ dependencies {
     implementation 'ai.pipestream:pipestream-service-registration'
 
     // Test dependencies
+    testImplementation platform("ai.pipestream:pipestream-bom:${pipestreamBomVersion}")
     testImplementation libs.quarkus.junit5
     testImplementation libs.rest.assured
     testImplementation libs.awaitility
