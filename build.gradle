@@ -95,6 +95,7 @@ java {
 
 test {
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    systemProperty "pipestream.wiremock.image", "docker.io/pipestreamai/pipestream-wiremock-server:0.1.30"
     environment "TESTCONTAINERS_RYUK_DISABLED", "false"
 
     // Add JVM option for JDK 24+
