@@ -1,6 +1,6 @@
 package ai.pipestream.account;
 
-import ai.pipestream.account.util.WireMockTestResource;
+import ai.pipestream.test.support.WireMockTestResource;
 import ai.pipestream.repository.account.v1.AccountEvent;
 import ai.pipestream.repository.account.v1.AccountServiceGrpc;
 import ai.pipestream.repository.account.v1.CreateAccountRequest;

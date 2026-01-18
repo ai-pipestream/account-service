@@ -11,7 +11,7 @@ import java.time.Instant;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-import ai.pipestream.account.util.WireMockTestResource;
+import ai.pipestream.test.support.WireMockTestResource;
 
 @QuarkusTest
 @QuarkusTestResource(WireMockTestResource.class)

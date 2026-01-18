@@ -2,7 +2,7 @@ package ai.pipestream.account;
 
 import ai.pipestream.account.entity.Account;
 import ai.pipestream.account.repository.AccountRepository;
-import ai.pipestream.account.util.WireMockTestResource;
+import ai.pipestream.test.support.WireMockTestResource;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
