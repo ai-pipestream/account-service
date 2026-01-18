@@ -77,7 +77,7 @@ dependencies {
     testImplementation libs.rest.assured
     testImplementation libs.awaitility
     testImplementation libs.apicurio.registry.protobuf.serde
-    testImplementation(testFixtures("ai.pipestream:pipestream-test-support"))
+    testImplementation(testFixtures("ai.pipestream:pipestream-test-support:${pipestreamBomVersion}"))
     // Testcontainers - version managed by pipestream-bom
     testImplementation 'org.testcontainers:testcontainers'
 }
