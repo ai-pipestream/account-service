@@ -70,6 +70,7 @@ dependencies {
     implementation 'ai.pipestream:pipestream-quarkus-devservices'
     implementation 'ai.pipestream:quarkus-dynamic-grpc'
     implementation 'ai.pipestream:pipestream-service-registration'
+    implementation 'ai.pipestream:pipestream-server'
 
     // Test dependencies
     testImplementation platform("ai.pipestream:pipestream-bom:${pipestreamBomVersion}")
@@ -95,7 +96,6 @@ java {
 
 test {
     systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
-    systemProperty "pipestream.wiremock.image", "docker.io/pipestreamai/pipestream-wiremock-server:0.1.32"
     environment "TESTCONTAINERS_RYUK_DISABLED", "false"
 
     // Add JVM option for JDK 24+

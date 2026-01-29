@@ -5,7 +5,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'account-service'
+rootProject.name = 'account-manager'
 
 dependencyResolutionManagement {
     versionCatalogs {
