@@ -24,15 +24,17 @@ scmVersion {
 }
 
 // Proto toolchain configuration - fetches from Git and generates Java/gRPC code
+// Using git-proto-workspace mode to handle cross-module dependencies
 pipestreamProtos {
-    sourceMode = 'git'
+    sourceMode = 'git-proto-workspace'
+    gitRepo = "https://github.com/ai-pipestream/pipestream-protos.git"
+    gitRef = "main"
+    generateMutiny = true
+    generateDescriptors = true  // Required for Apicurio schema registry
 
     modules {
-        register("admin") {
-            gitRepo = "https://github.com/ai-pipestream/pipestream-protos.git"
-            gitRef = "main"
-            gitSubdir = "admin"
-        }
+        register("common")
+        register("admin")
     }
 }
 
