@@ -1,6 +1,6 @@
 # Account Manager Service
 
-Account management service for multi-tenant support in the Pipeline platform.
+Account management service for multi-tenant support in the Pipestream platform.
 
 ## Overview
 
@@ -12,7 +12,8 @@ The Account Manager service provides CRUD operations for tenant accounts. Accoun
 - **Idempotent Operations** - Safe to retry creates and inactivates
 - **Multi-Tenant Foundation** - Provides the account abstraction for isolating tenant data
 - **gRPC API** - Efficient binary protocol with Mutiny reactive support
-- **MySQL Storage** - Persistent account data with TIMESTAMP columns
+- **Event Publishing** - Publishes account lifecycle events to Kafka with Protobuf + Apicurio Registry
+- **PostgreSQL Storage** - Persistent account data with Flyway migrations
 - **Soft Deletes** - Accounts are inactivated (active=false) rather than deleted
 
 ## Architecture
@@ -22,19 +23,21 @@ The Account Manager service provides CRUD operations for tenant accounts. Accoun
 1. **gRPC Service** (`AccountServiceImpl`) - Thin gRPC wrapper, validates requests, maps proto ↔ entity
 2. **Repository** (`AccountRepository`) - Business logic and transactional data access
 3. **Entity** (`Account`) - JPA/Panache entity mapped to `accounts` table
-4. **Database** - MySQL with Flyway migrations
+4. **Event Publisher** (`AccountEventPublisher`) - Publishes account events to Kafka
+5. **Database** - PostgreSQL with Flyway migrations
 
 ### Data Flow
 
 ```
-gRPC Client → AccountServiceImpl → AccountRepository → Account Entity → MySQL
+gRPC Client → AccountServiceImpl → AccountRepository → Account Entity → PostgreSQL
+                                  → AccountEventPublisher → Kafka (account-events topic)
 ```
 
 All gRPC operations run on worker threads (`.runSubscriptionOn(Infrastructure.getDefaultWorkerPool())`) to avoid blocking the event loop.
 
 ## API
 
-Proto definition: `grpc/grpc-stubs/src/main/proto/repository/account/account_service.proto`
+Proto definitions are fetched from the [pipestream-protos](https://github.com/ai-pipestream/pipestream-protos) repository at build time via the proto-toolchain plugin.
 
 ### CreateAccount
 
@@ -149,20 +152,20 @@ grpcurl -plaintext -d '{"account_id":"acme-corp","reason":"Account closure"}' \
 - `idx_accounts_active` on (active)
 - `idx_accounts_name` on (name)
 
-**Migration:** `src/main/resources/db/migration/V1__create_accounts_table.sql`
+**Migrations:** `src/main/resources/db/migration/`
 
 ## Configuration
 
 ### Server Ports
 
 - **Production:** HTTP/gRPC on port 38105
-- **Dev:** HTTP/gRPC on port 38105 with `/account` root path
+- **Dev:** HTTP/gRPC on port 38105 with `/account-manager` root path
 - **Test:** Random port (quarkus.http.test-port=0)
 
 ### Database
 
-- **Dev:** MySQL via Docker Compose Dev Services on port 3306
-- **Test:** MySQL via compose-test-services on port 3307
+- **Dev:** PostgreSQL via Docker Compose Dev Services on port 5432
+- **Test:** PostgreSQL via Quarkus DevServices (auto-provisioned)
 - **Prod:** Configured via environment variables
 
 ### Service Registration
@@ -174,12 +177,13 @@ The service auto-registers with the Platform Registration Service on startup (di
 ### Development Mode
 
 ```bash
-./gradlew :applications:account-manager:quarkusDev
+./gradlew quarkusDev
 ```
 
 The service will:
-- Start on http://localhost:38105/account
-- Connect to MySQL via Dev Services (Docker Compose)
+- Start on http://localhost:38105/account-manager
+- Connect to PostgreSQL via Dev Services (Docker Compose)
+- Connect to Kafka and Apicurio Registry via Dev Services
 - Auto-register with Platform Registration Service
 - Enable gRPC reflection for testing
 
@@ -187,13 +191,14 @@ The service will:
 
 Run all tests:
 ```bash
-./gradlew :applications:account-manager:test
+./gradlew test
 ```
 
 Test suites:
-- **AccountRepositoryTest** - Repository CRUD tests against MySQL (7 tests)
-- **AccountManagerWireMockTest** - WireMock gRPC mocking tests (6 tests)
-- **AccountServiceTest** - End-to-end gRPC tests (3 tests)
+- **AccountRepositoryTest** - Repository CRUD tests against PostgreSQL
+- **AccountServiceTest** / **AccountServiceGrpcTest** - End-to-end gRPC tests
+- **AccountEventPublisherTest** - Kafka event publishing with Protobuf serialization
+- **AccountResourceTest** - HTTP endpoint tests
 
 ### Testing with grpcurl
 
@@ -258,99 +263,19 @@ Both `createAccount` and `inactivateAccount` are idempotent:
 - Creating an existing account returns the existing record with `created=false`
 - Inactivating an already inactive account returns `success=true`
 
-## Testing
-
-### Repository Tests
-
-Direct tests of the repository layer against MySQL:
-
-```java
-@QuarkusTest
-public class AccountRepositoryTest {
-    @Inject
-    AccountRepository accountRepository;
-
-    @Test
-    void testCreateAccount() {
-        Account account = accountRepository.createAccount("test-id", "Test", "Description");
-        assertEquals("test-id", account.accountId);
-    }
-}
-```
-
-### WireMock Tests
-
-Tests using grpc-wiremock to mock the Account Service:
-
-```java
-@QuarkusTest
-@QuarkusTestResource(WireMockGrpcTestResource.class)
-@TestProfile(MockGrpcProfile.class)
-public class AccountManagerWireMockTest {
-    @InjectWireMock
-    WireMockServer wireMockServer;
-
-    @Test
-    void testCreateAccount_Success() {
-        new AccountManagerMock(wireMockServer.port())
-            .mockCreateAccount("test-id", "Test", "Description");
-        // Test your client code that calls account service
-    }
-}
-```
-
-### gRPC Integration Tests
-
-End-to-end tests calling the actual gRPC service:
-
-```java
-@QuarkusTest
-public class AccountServiceTest {
-    @GrpcClient
-    AccountServiceGrpc.AccountServiceBlockingStub accountService;
-
-    @Test
-    void testCreateAccount() {
-        var response = accountService.createAccount(
-            CreateAccountRequest.newBuilder()
-                .setAccountId("test-id")
-                .setName("Test")
-                .build()
-        );
-        assertTrue(response.getCreated());
-    }
-}
-```
 
 ## Dependencies
 
 - **Quarkus gRPC** - gRPC server and client support
 - **Hibernate ORM Panache** - Simplified JPA with active record pattern
-- **MySQL** - Database (via quarkus-jdbc-mysql)
+- **PostgreSQL** - Database (via quarkus-jdbc-postgresql)
 - **Flyway** - Database migrations
-- **S3 Client** - Optional dev-only S3 bucket creation
-- **grpc-wiremock** - Test mocking framework
-
-## Future Enhancements
-
-Per the implementation plan, the following are deferred to later phases:
-
-- API key management (handled by Connector Admin service)
-- Roles and permissions
-- Account quotas and limits
-- Cross-service authentication (mTLS/JWT)
-- Drive ownership transfer between accounts
-- Account deletion with cascade to drives
+- **SmallRye Reactive Messaging** - Kafka event publishing
+- **Apicurio Registry** - Protobuf schema management (via pipestream extension)
+- **Pipestream Platform** - BOM, DevServices, server extension, proto toolchain
 
 ## Related Services
 
+- **Platform Registration Service** - Service registry and discovery
 - **Repository Service** - Manages drives owned by accounts
-- **Connector Admin Service** - Manages connectors linked to accounts (with API keys)
-- **Connector Intake Service** - Authenticates via connector API keys, validates account access
-
-## References
-
-- Proto definition: `grpc/grpc-stubs/src/main/proto/repository/account/account_service.proto`
-- Implementation plan: `docs/research/junie/2025-10-16_phase1_account_service_instruction_plan.md`
-- grpc-wiremock framework: `grpc/grpc-wiremock/README.md`
-- Shared dev services: `docs/SHARED-DEVSERVICES.md`
+- **Connector Admin Service** - Manages connectors linked to accounts
