@@ -13,6 +13,9 @@ import java.util.UUID;
 @ApplicationScoped
 public class AccountEventUuidKeyExtractor implements UuidKeyExtractor<AccountEvent> {
 
+    /** Creates a new AccountEventUuidKeyExtractor (CDI managed). */
+    public AccountEventUuidKeyExtractor() {}
+
     @Override
     public UUID extractKey(AccountEvent event) {
         String accountId = event.getAccountId();

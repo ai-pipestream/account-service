@@ -26,7 +26,11 @@ import java.util.List;
 @Path("/api/accounts")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Accounts", description = "Account management operations")
+@SuppressWarnings("java:S6813") // CDI field injection
 public class AccountResource {
+
+    /** Creates a new AccountResource (CDI managed). */
+    public AccountResource() {}
 
     private static final int DEFAULT_PAGE_SIZE = 50;
     private static final int MAX_PAGE_SIZE = 200;
@@ -34,6 +38,15 @@ public class AccountResource {
     @Inject
     AccountRepository accountRepository;
 
+    /**
+     * Lists accounts with optional filtering and pagination.
+     *
+     * @param includeInactive whether to include inactive accounts
+     * @param pageSize        number of results per page
+     * @param pageToken       opaque token for the next page
+     * @param query           optional search query
+     * @return paginated account list
+     */
     @GET
     @Operation(summary = "List accounts", description = "Returns a paginated list of accounts, excluding inactive by default.")
     @APIResponse(responseCode = "200", description = "List of accounts")
@@ -70,6 +83,12 @@ public class AccountResource {
         return new AccountListResponse(dtos, (int) Math.min(totalCount, Integer.MAX_VALUE), nextPageToken);
     }
 
+    /**
+     * Returns a single account by ID.
+     *
+     * @param accountId the account identifier
+     * @return the account, or 404 if not found
+     */
     @GET
     @Path("/{accountId}")
     @Operation(summary = "Get account", description = "Returns a single account by ID.")
@@ -94,6 +113,12 @@ public class AccountResource {
         );
     }
 
-    /** Response wrapper for list endpoint. */
+    /**
+     * Response wrapper for the list endpoint.
+     *
+     * @param accounts      page of account DTOs
+     * @param totalCount    total number of matching accounts
+     * @param nextPageToken token for fetching the next page, or {@code null}
+     */
     public record AccountListResponse(List<AccountDto> accounts, int totalCount, String nextPageToken) {}
 }
