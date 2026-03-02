@@ -68,7 +68,7 @@ message CreateAccountResponse {
 **Example:**
 ```bash
 grpcurl -plaintext -d '{"account_id":"acme-corp","name":"Acme Corporation","description":"Test account"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/CreateAccount
+  localhost:18105 io.pipeline.repository.account.AccountService/CreateAccount
 ```
 
 ### GetAccount
@@ -100,7 +100,7 @@ message Account {
 **Example:**
 ```bash
 grpcurl -plaintext -d '{"account_id":"acme-corp"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/GetAccount
+  localhost:18105 io.pipeline.repository.account.AccountService/GetAccount
 ```
 
 ### InactivateAccount
@@ -132,7 +132,7 @@ message InactivateAccountResponse {
 **Example:**
 ```bash
 grpcurl -plaintext -d '{"account_id":"acme-corp","reason":"Account closure"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/InactivateAccount
+  localhost:18105 io.pipeline.repository.account.AccountService/InactivateAccount
 ```
 
 ## Database Schema
@@ -158,8 +158,8 @@ grpcurl -plaintext -d '{"account_id":"acme-corp","reason":"Account closure"}' \
 
 ### Server Ports
 
-- **Production:** HTTP/gRPC on port 38105
-- **Dev:** HTTP/gRPC on port 38105 with `/account-manager` root path
+- **Production:** HTTP/gRPC on port 18105
+- **Dev:** HTTP/gRPC on port 18105 with `/account-manager` root path
 - **Test:** Random port (quarkus.http.test-port=0)
 
 ### Database
@@ -181,7 +181,7 @@ The service auto-registers with the Platform Registration Service on startup (di
 ```
 
 The service will:
-- Start on http://localhost:38105/account-manager
+- Start on http://localhost:18105/account-manager
 - Connect to PostgreSQL via Dev Services (Docker Compose)
 - Connect to Kafka and Apicurio Registry via Dev Services
 - Auto-register with Platform Registration Service
@@ -204,22 +204,22 @@ Test suites:
 
 List services:
 ```bash
-grpcurl -plaintext localhost:38105 list
+grpcurl -plaintext localhost:18105 list
 ```
 
 Call methods:
 ```bash
 # Create account
 grpcurl -plaintext -d '{"account_id":"test-123","name":"Test Account"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/CreateAccount
+  localhost:18105 io.pipeline.repository.account.AccountService/CreateAccount
 
 # Get account
 grpcurl -plaintext -d '{"account_id":"test-123"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/GetAccount
+  localhost:18105 io.pipeline.repository.account.AccountService/GetAccount
 
 # Inactivate account
 grpcurl -plaintext -d '{"account_id":"test-123","reason":"Testing"}' \
-  localhost:38105 io.pipeline.repository.account.AccountService/InactivateAccount
+  localhost:18105 io.pipeline.repository.account.AccountService/InactivateAccount
 ```
 
 ## Implementation Details
