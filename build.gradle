@@ -64,8 +64,6 @@ dependencies {
     // Service Discovery dependencies for Consul
     implementation 'io.smallrye.stork:stork-service-discovery-consul'
     implementation 'io.smallrye.reactive:smallrye-mutiny-vertx-consul-client'
-    implementation 'io.smallrye.stork:stork-service-registration-consul'
-
     // Pipestream platform libraries (managed via BOM)
     // Pipestream devservices extension - version managed by pipestream-bom
     implementation 'ai.pipestream:pipestream-quarkus-devservices'
@@ -84,6 +82,9 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
 }
 
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
 
 group = 'ai.pipestream'
 version = "${scmVersion.version}"
