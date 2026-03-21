@@ -4,6 +4,7 @@ import ai.pipestream.apicurio.registry.protobuf.UuidKeyExtractor;
 import ai.pipestream.repository.account.v1.AccountEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
@@ -29,7 +30,7 @@ public class AccountEventUuidKeyExtractor implements UuidKeyExtractor<AccountEve
         } catch (IllegalArgumentException e) {
             // Fallback for non-UUID strings (e.g. test IDs or legacy IDs)
             // Generate a deterministic UUID based on the string.
-            return UUID.nameUUIDFromBytes(accountId.getBytes());
+            return UUID.nameUUIDFromBytes(accountId.getBytes(StandardCharsets.UTF_8));
         }
     }
 }

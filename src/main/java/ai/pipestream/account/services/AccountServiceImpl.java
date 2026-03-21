@@ -260,6 +260,12 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
+    /**
+     * Lists accounts with optional query, pagination token, and inactive inclusion.
+     *
+     * @param request list query, page size, token, and filters
+     * @return paginated account list with total count
+     */
     @Override
     public Uni<ListAccountsResponse> listAccounts(ListAccountsRequest request) {
         return Uni.createFrom().item(() -> {
@@ -311,6 +317,12 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
         }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool());
     }
 
+    /**
+     * Streams all matching accounts as a reactive {@link Multi} (one response per account).
+     *
+     * @param request query and inactive filter
+     * @return stream of account payloads
+     */
     @Override
     public Multi<StreamAllAccountsResponse> streamAllAccounts(StreamAllAccountsRequest request) {
         return Uni.createFrom().item(() -> {
@@ -328,6 +340,12 @@ public class AccountServiceImpl extends MutinyAccountServiceGrpc.AccountServiceI
                 .build());
     }
 
+    /**
+     * Updates mutable fields (name, description) for an existing account.
+     *
+     * @param request account id and new field values
+     * @return updated account proto, or {@code NOT_FOUND}
+     */
     @Override
     public Uni<UpdateAccountResponse> updateAccount(UpdateAccountRequest request) {
         return Uni.createFrom().item(() -> {
